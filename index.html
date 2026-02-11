@@ -4,93 +4,141 @@
     <meta charset="UTF-8">
     <title>KFUPM Staff Evaluation Analysis Tool</title>
 
-    <!-- SheetJS for reading Excel -->
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- SheetJS -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <!-- Chart.js for charts -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #eef2f7;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0d47a1, #1976d2);
             padding: 30px;
-            background: #f4f6f9;
-        }
-
-        h2 {
-            margin-top: 40px;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        input, button {
-            padding: 10px;
-            margin: 8px 0;
-        }
-
-        button {
-            background: #0066cc;
             color: white;
-            border: none;
-            cursor: pointer;
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.2);
         }
 
-        button:hover {
-            background: #004c99;
+        .container {
+            width: 85%;
+            margin: 20px auto;
         }
 
         .section {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.08);
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            margin-top: 25px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(10px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+
+        h2 {
+            color: #0d47a1;
+            margin-bottom: 12px;
+        }
+
+        input[type=file], input[type=number] {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 15px;
+        }
+
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #0d47a1;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
+            margin-top: 18px;
+            font-size: 14px;
         }
 
         th {
-            background: #0066cc;
+            background: #1976d2;
             color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        .count-box {
+            background: #e3f2fd;
+            padding: 10px;
+            margin-top: 10px;
+            border-left: 5px solid #1976d2;
+            border-radius: 6px;
         }
     </style>
 </head>
 
 <body>
 
-    <h1>KFUPM Staff Evaluation Analysis Tool</h1>
+<header>
+    KFUPM Staff Evaluation Analysis Tool
+</header>
 
-    <!-- File Upload Section -->
+<div class="container">
+
+    <!-- Upload Section -->
     <div class="section">
         <h2>Upload Excel Files</h2>
-        <p>Upload the 3 required Excel files:</p>
+        <p>Select your 3 evaluation category files:</p>
 
-        <label>Staff Professional:</label>
-        <input type="file" id="fileProfessional"><br>
+        <label>Staff Professional</label>
+        <input type="file" id="fileProfessional">
 
-        <label>Staff Support:</label>
-        <input type="file" id="fileSupport"><br>
+        <label>Staff Support</label>
+        <input type="file" id="fileSupport">
 
-        <label>Staff Chief:</label>
-        <input type="file" id="fileChief"><br>
+        <label>Staff Chief</label>
+        <input type="file" id="fileChief">
 
         <button onclick="loadFiles()">Load Files</button>
-
-        <p id="fileStatus" style="color: green; font-weight: bold;"></p>
+        <p id="fileStatus" style="color: green; font-weight: 600;"></p>
     </div>
 
-    <!-- Search Section -->
+    <!-- Search -->
     <div class="section">
-        <h2>Search by KFUPM ID</h2>
+        <h2>Search Employee</h2>
         <input type="number" id="searchID" placeholder="Enter KFUPM ID">
         <button onclick="searchEmployee()">Search</button>
     </div>
@@ -100,12 +148,18 @@
         <h2>Employee Information</h2>
         <p><strong>Name:</strong> <span id="empName"></span></p>
         <p><strong>Department:</strong> <span id="empDept"></span></p>
-        <p><strong>Overall Score:</strong> <span id="empScore"></span></p>
+        <p><strong>Category:</strong> <span id="empCat"></span></p>
+        <p><strong>Score:</strong> <span id="empScore"></span></p>
     </div>
 
     <!-- Department Comparison -->
     <div id="deptComparison" class="section" style="display:none;">
-        <h2>Department Score Comparison</h2>
+        <h2>Department Comparison</h2>
+        <div class="count-box">
+            <strong>Total employees in this department (same category):</strong>
+            <span id="deptCount"></span>
+        </div>
+
         <table id="deptTable">
             <thead>
                 <tr>
@@ -118,13 +172,12 @@
         </table>
     </div>
 
-    <!-- Department Analysis -->
+    <!-- Analysis -->
     <div id="deptAnalysis" class="section" style="display:none;">
         <h2>Department Score Analysis</h2>
         <p><strong>Average Score:</strong> <span id="avgScore"></span></p>
 
-        <h3>Score Distribution</h3>
-        <canvas id="scoreChart" width="400" height="200"></canvas>
+        <canvas id="scoreChart" height="150"></canvas>
     </div>
 
     <!-- Recommendation -->
@@ -133,117 +186,130 @@
         <p id="recText"></p>
     </div>
 
+</div>
+
 <script>
     let allData = [];
+    let categorized = {
+        "Professional": [],
+        "Support": [],
+        "Chief": []
+    };
 
-    // READ EXCEL FILES
     function loadFiles() {
-        const files = [
-            document.getElementById("fileProfessional").files[0],
-            document.getElementById("fileSupport").files[0],
-            document.getElementById("fileChief").files[0]
+        const mapping = [
+            {file: document.getElementById("fileProfessional").files[0], cat:"Professional"},
+            {file: document.getElementById("fileSupport").files[0], cat:"Support"},
+            {file: document.getElementById("fileChief").files[0], cat:"Chief"}
         ];
 
         allData = [];
+        mapping.forEach(set => {
+            if (!set.file) return;
 
-        files.forEach(file => {
-            if (!file) return;
             const reader = new FileReader();
-
-            reader.onload = function(e) {
-                const workbook = XLSX.read(e.target.result, { type: "binary" });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet);
+            reader.onload = e => {
+                const workbook = XLSX.read(e.target.result, { type:"binary" });
+                const sheet = workbook.SheetNames[0];
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheet]);
 
                 rows.forEach(r => {
-                    allData.push({
-                        id: r["KFUPM ID"],
+                    const entry = {
+                        id: String(r["KFUPM ID"]),
                         name: r["Name"],
                         dept: r["Department"],
-                        score: Number(r["Overall Score"])
-                    });
+                        score: Number(r["Overall Score"]),
+                        category: set.cat
+                    };
+                    categorized[set.cat].push(entry);
+                    allData.push(entry);
                 });
             };
-
-            reader.readAsBinaryString(file);
+            reader.readAsBinaryString(set.file);
         });
 
         document.getElementById("fileStatus").innerText = "Files loaded successfully!";
     }
 
-    // SEARCH EMPLOYEE
     function searchEmployee() {
         const id = document.getElementById("searchID").value.trim();
-        const emp = allData.find(e => String(e.id) === id);
+        const emp = allData.find(e => e.id === id);
 
-        if (!emp) {
-            alert("Employee not found!");
-            return;
-        }
+        if (!emp) { alert("Employee not found."); return; }
 
-        // Display Employee
+        // Employee info
         document.getElementById("employeeInfo").style.display = "block";
-        document.getElementById("empName").innerText = emp.name;
-        document.getElementById("empDept").innerText = emp.dept;
-        document.getElementById("empScore").innerText = emp.score;
+        empCat.innerText = emp.category;
+        empName.innerText = emp.name;
+        empDept.innerText = emp.dept;
+        empScore.innerText = emp.score;
 
-        // Department Ranking
-        const deptMembers = allData.filter(e => e.dept === emp.dept);
-        deptMembers.sort((a, b) => b.score - a.score);
+        // Filter same category + department
+        const group = categorized[emp.category].filter(e => e.dept === emp.dept);
 
+        // Count
+        document.getElementById("deptCount").innerText = group.length;
+
+        // Sort highest to lowest
+        group.sort((a, b) => b.score - a.score);
+
+        // Table
         const tbody = document.querySelector("#deptTable tbody");
         tbody.innerHTML = "";
-        deptMembers.forEach(d => {
+        group.forEach(p => {
             tbody.innerHTML += `
                 <tr>
-                    <td>${d.id}</td>
-                    <td>${d.name}</td>
-                    <td>${d.score}</td>
-                </tr>
-            `;
+                    <td>${p.id}</td>
+                    <td>${p.name}</td>
+                    <td>${p.score}</td>
+                </tr>`;
         });
 
-        document.getElementById("deptComparison").style.display = "block";
+        deptComparison.style.display = "block";
 
-        // Department Analysis
-        const avg = deptMembers.reduce((s, x) => s + x.score, 0) / deptMembers.length;
-        document.getElementById("avgScore").innerText = avg.toFixed(2);
-        document.getElementById("deptAnalysis").style.display = "block";
+        // Analysis
+        const avg = group.reduce((s, x) => s + x.score, 0) / group.length;
+        avgScore.innerText = avg.toFixed(2);
+        deptAnalysis.style.display = "block";
 
-        // Score distribution
-        const distribution = {1:0, 2:0, 3:0, 4:0};
-        deptMembers.forEach(d => distribution[d.score]++);
+        // Distribution
+        const dist = {1:0,2:0,3:0,4:0};
+        group.forEach(g => dist[g.score]++);
 
-        drawChart(distribution);
+        drawChart(dist);
 
-        // Recommendation Logic
+        // Recommendation logic
         let rec = "";
-        const normalPattern = distribution[3] >= Math.max(distribution[1], distribution[2], distribution[4]);
+        const normal = dist[3] >= Math.max(dist[1], dist[2], dist[4]);
 
-        if (normalPattern) {
-            rec = `Based on the review of the evaluation of the past 3 years 
-                   and comparison with peers, and considering the department average of 
-                   ${avg.toFixed(2)}, we recommend **no changes** in the evaluation score.`;
+        if (normal) {
+            rec = `Based on the department score distribution and the 
+            average score of ${avg.toFixed(2)}, the evaluation score appears 
+            aligned with peers. No changes are recommended.`;
         } else {
-            rec = `Based on the review of the evaluation of the past 3 years 
-                   and comparison with peers, and considering the abnormal department average of 
-                   ${avg.toFixed(2)}, we recommend **a reconsideration** of the evaluation score.`;
+            rec = `The department shows anomalies in score distribution, 
+            with an average of ${avg.toFixed(2)}. A reconsideration of 
+            the evaluation score is recommended.`;
         }
 
-        document.getElementById("recText").innerText = rec;
-        document.getElementById("recommendation").style.display = "block";
+        recText.innerText = rec;
+        recommendation.style.display = "block";
     }
 
+    let chartObj = null;
+
     function drawChart(dist) {
+        if (chartObj) chartObj.destroy();
+
         const ctx = document.getElementById("scoreChart");
-        new Chart(ctx, {
+        chartObj = new Chart(ctx, {
             type: "bar",
             data: {
-                labels: ["1", "2", "3", "4"],
+                labels: ["1","2","3","4"],
                 datasets: [{
                     label: "Score Distribution",
                     data: [dist[1], dist[2], dist[3], dist[4]],
-                    backgroundColor: ["#cc0000","#ff9900","#009933","#0066cc"]
+                    backgroundColor: ["#c62828","#ef6c00","#2e7d32","#1565c0"]
                 }]
             }
         });
@@ -252,4 +318,3 @@
 
 </body>
 </html>
-
