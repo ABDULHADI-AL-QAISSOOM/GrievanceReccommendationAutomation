@@ -1,320 +1,216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>KFUPM Staff Evaluation Analysis Tool</title>
+  <meta charset="UTF-8" />
+  <title>KFUPM Staff Evaluation Analysis Tool</title>
 
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet" />
 
-    <!-- SheetJS -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #eef2f7;
-        }
-
-        header {
-            background: linear-gradient(135deg, #0d47a1, #1976d2);
-            padding: 30px;
-            color: white;
-            text-align: center;
-            font-size: 28px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.2);
-        }
-
-        .container {
-            width: 85%;
-            margin: 20px auto;
-        }
-
-        .section {
-            background: white;
-            padding: 25px;
-            border-radius: 14px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-            margin-top: 25px;
-            animation: fadeIn 0.4s ease;
-        }
-
-        @keyframes fadeIn {
-            from {opacity: 0; transform: translateY(10px);}
-            to {opacity: 1; transform: translateY(0);}
-        }
-
-        h2 {
-            color: #0d47a1;
-            margin-bottom: 12px;
-        }
-
-        input[type=file], input[type=number] {
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 15px;
-        }
-
-        button {
-            background: #1976d2;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-top: 12px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: #0d47a1;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 18px;
-            font-size: 14px;
-        }
-
-        th {
-            background: #1976d2;
-            color: white;
-            padding: 12px;
-            text-align: left;
-        }
-
-        td {
-            border-bottom: 1px solid #ddd;
-            padding: 10px;
-        }
-
-        .count-box {
-            background: #e3f2fd;
-            padding: 10px;
-            margin-top: 10px;
-            border-left: 5px solid #1976d2;
-            border-radius: 6px;
-        }
-    </style>
+  <style>
+    :root{
+      --primary:#115f66;
+      --secondary:#009767;
+      --light-bg:#eef2f7;
+      --ink:#1f2937;
+      --muted:#6b7280;
+      --card:#ffffff;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      margin:0;background:var(--light-bg);color:var(--ink);
+    }
+    header{
+      background:linear-gradient(135deg,var(--primary),var(--secondary));
+      color:#fff;padding:28px 20px;text-align:center;
+      font-size:26px;font-weight:600;letter-spacing:.3px;
+      box-shadow:0 6px 20px rgba(0,0,0,.12);
+    }
+    .container{width:min(1100px,90%);margin:22px auto}
+    .section{
+      background:var(--card);padding:22px;border-radius:14px;
+      box-shadow:0 8px 24px rgba(0,0,0,.08);margin-top:22px;
+      animation:fadeIn .35s ease;
+    }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    h2{color:var(--primary);margin:0 0 12px}
+    p.help{color:var(--muted);margin:6px 0 14px}
+    label{display:block;margin-top:10px;font-weight:600}
+    input[type=file],input[type=number]{
+      width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;margin-top:6px;
+      font-size:15px;background:#fff;
+    }
+    button{
+      background:var(--primary);color:#fff;border:none;border-radius:10px;
+      padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px;
+      transition:all .25s ease;box-shadow:0 6px 14px rgba(17,95,102,.25);
+    }
+    button:hover{background:var(--secondary);transform:translateY(-1px)}
+    .status{font-weight:600;color:var(--secondary);margin-top:10px}
+    table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
+    thead th{
+      background:var(--primary);color:#fff;padding:12px;text-align:left;position:sticky;top:0;
+    }
+    tbody td{padding:10px;border-bottom:1px solid #e5e7eb}
+    .count-box{
+      background:#ddf3e9;border-left:6px solid var(--secondary);
+      padding:10px 12px;border-radius:10px;margin:6px 0 12px;font-weight:600;
+    }
+    .badge{
+      display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700;
+    }
+    .badge-ok{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7}
+    .badge-warn{background:#fff3cd;color:#7a5a00;border:1px solid #ffe69c}
+    .grid{
+      display:grid;grid-template-columns:1fr;gap:18px;
+    }
+    @media (min-width:900px){
+      .grid{grid-template-columns:1fr 1fr}
+    }
+    canvas{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:8px}
+    .muted{color:var(--muted)}
+    .flex{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .small{font-size:13px}
+  </style>
 </head>
-
 <body>
 
 <header>
-    KFUPM Staff Evaluation Analysis Tool
+  KFUPM Staff Evaluation Analysis Tool
 </header>
 
 <div class="container">
 
-    <!-- Upload Section -->
-    <div class="section">
-        <h2>Upload Excel Files</h2>
-        <p>Select your 3 evaluation category files:</p>
+  <!-- Upload -->
+  <div class="section">
+    <h2>Upload Excel Files</h2>
+    <p class="help">Upload the three categories with headers: <strong>KFUPM ID</strong>, <strong>Name</strong>, <strong>Department</strong>, <strong>Overall Score</strong>, <strong>Total (100)</strong>.</p>
 
-        <label>Staff Professional</label>
-        <input type="file" id="fileProfessional">
+    <label>Staff Professional</label>
+    <input type="file" id="fileProfessional" accept=".xlsx,.xls" />
 
-        <label>Staff Support</label>
-        <input type="file" id="fileSupport">
+    <label>Staff Support</label>
+    <input type="file" id="fileSupport" accept=".xlsx,.xls" />
 
-        <label>Staff Chief</label>
-        <input type="file" id="fileChief">
+    <label>Staff Chief</label>
+    <input type="file" id="fileChief" accept=".xlsx,.xls" />
 
-        <button onclick="loadFiles()">Load Files</button>
-        <p id="fileStatus" style="color: green; font-weight: 600;"></p>
+    <button onclick="loadFiles()">Load Files</button>
+    <div id="fileStatus" class="status"></div>
+  </div>
+
+  <!-- Search -->
+  <div class="section">
+    <h2>Search Employee</h2>
+    <div class="flex">
+      <input type="number" id="searchID" placeholder="Enter KFUPM ID" />
+      <button onclick="searchEmployee()">Search</button>
+    </div>
+    <p class="small muted">The comparison includes only employees from the <strong>same Department</strong> and the <strong>same Category</strong>.</p>
+  </div>
+
+  <!-- Employee Info -->
+  <div id="employeeInfo" class="section" style="display:none;">
+    <h2>Employee Information</h2>
+    <div class="flex">
+      <div><strong>Name:</strong> <span id="empName"></span></div>
+      <div><strong>Department:</strong> <span id="empDept"></span></div>
+      <div><strong>Category:</strong> <span id="empCat"></span></div>
+      <div><strong>Overall Score:</strong> <span id="empScore"></span></div>
+      <div><strong>Total (100):</strong> <span id="empTotal"></span></div>
+    </div>
+  </div>
+
+  <!-- Department Comparison -->
+  <div id="deptComparison" class="section" style="display:none;">
+    <h2>Department Comparison</h2>
+    <div class="count-box">
+      Employees in this department (same category): <span id="deptCount"></span>
     </div>
 
-    <!-- Search -->
-    <div class="section">
-        <h2>Search Employee</h2>
-        <input type="number" id="searchID" placeholder="Enter KFUPM ID">
-        <button onclick="searchEmployee()">Search</button>
+    <table id="deptTable">
+      <thead>
+        <tr>
+          <th>KFUPM ID</th>
+          <th>Name</th>
+          <th>Total (100)</th>
+          <th>Overall Score</th>
+          <th>Flag</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Analysis -->
+  <div id="deptAnalysis" class="section" style="display:none;">
+    <h2>Department Score Analysis</h2>
+    <div class="flex small muted">
+      <div><strong>Average Overall Score:</strong> <span id="avgScore"></span></div>
     </div>
 
-    <!-- Employee Info -->
-    <div id="employeeInfo" class="section" style="display:none;">
-        <h2>Employee Information</h2>
-        <p><strong>Name:</strong> <span id="empName"></span></p>
-        <p><strong>Department:</strong> <span id="empDept"></span></p>
-        <p><strong>Category:</strong> <span id="empCat"></span></p>
-        <p><strong>Score:</strong> <span id="empScore"></span></p>
+    <div class="grid" style="margin-top:10px;">
+      <div>
+        <p class="small muted"><strong>Overall Score Distribution</strong> (1–4)</p>
+        <canvas id="scoreChart" height="180"></canvas>
+      </div>
+      <div>
+        <p class="small muted"><strong>Total (100) Distribution</strong> (0–100, binned)</p>
+        <canvas id="totalChart" height="180"></canvas>
+      </div>
     </div>
+  </div>
 
-    <!-- Department Comparison -->
-    <div id="deptComparison" class="section" style="display:none;">
-        <h2>Department Comparison</h2>
-        <div class="count-box">
-            <strong>Total employees in this department (same category):</strong>
-            <span id="deptCount"></span>
-        </div>
-
-        <table id="deptTable">
-            <thead>
-                <tr>
-                    <th>KFUPM ID</th>
-                    <th>Name</th>
-                    <th>Score</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <!-- Analysis -->
-    <div id="deptAnalysis" class="section" style="display:none;">
-        <h2>Department Score Analysis</h2>
-        <p><strong>Average Score:</strong> <span id="avgScore"></span></p>
-
-        <canvas id="scoreChart" height="150"></canvas>
-    </div>
-
-    <!-- Recommendation -->
-    <div id="recommendation" class="section" style="display:none;">
-        <h2>Recommendation</h2>
-        <p id="recText"></p>
-    </div>
-
+  <!-- Recommendation -->
+  <div id="recommendation" class="section" style="display:none;">
+    <h2>Recommendation</h2>
+    <p id="recText"></p>
+  </div>
 </div>
 
 <script>
-    let allData = [];
-    let categorized = {
-        "Professional": [],
-        "Support": [],
-        "Chief": []
-    };
+  // ====== Config ======
+  const COLORS = { primary: "#115f66", secondary: "#009767" };
+  const TOTAL_DELTA = 2; // "Similar total" threshold (±2 points)
 
-    function loadFiles() {
-        const mapping = [
-            {file: document.getElementById("fileProfessional").files[0], cat:"Professional"},
-            {file: document.getElementById("fileSupport").files[0], cat:"Support"},
-            {file: document.getElementById("fileChief").files[0], cat:"Chief"}
-        ];
+  // ====== State ======
+  let categorized = { Professional: [], Support: [], Chief: [] };
+  let allData = [];
+  let scoreChartObj = null;
+  let totalChartObj = null;
 
-        allData = [];
-        mapping.forEach(set => {
-            if (!set.file) return;
+  // ====== Excel Loading Helpers ======
+  function readExcelFile(file, category){
+    return new Promise((resolve, reject) => {
+      if(!file) return resolve([]);
+      const reader = new FileReader();
+      reader.onload = e => {
+        try{
+          const workbook = XLSX.read(e.target.result, { type:"binary" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet);
+          const cleaned = rows.map(r => ({
+            id: String(r["KFUPM ID"] ?? "").trim(),
+            name: String(r["Name"] ?? "").trim(),
+            dept: String(r["Department"] ?? "").trim(),
+            score: Number(r["Overall Score"]),
+            total: Number(r["Total (100)"]),
+            category
+          })).filter(x => x.id && x.name && x.dept && !Number.isNaN(x.score) && !Number.isNaN(x.total));
+          resolve(cleaned);
+        }catch(err){ reject(err); }
+      };
+      reader.onerror = reject;
+      reader.readAsBinaryString(file);
+    });
+  }
 
-            const reader = new FileReader();
-            reader.onload = e => {
-                const workbook = XLSX.read(e.target.result, { type:"binary" });
-                const sheet = workbook.SheetNames[0];
-                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheet]);
-
-                rows.forEach(r => {
-                    const entry = {
-                        id: String(r["KFUPM ID"]),
-                        name: r["Name"],
-                        dept: r["Department"],
-                        score: Number(r["Overall Score"]),
-                        category: set.cat
-                    };
-                    categorized[set.cat].push(entry);
-                    allData.push(entry);
-                });
-            };
-            reader.readAsBinaryString(set.file);
-        });
-
-        document.getElementById("fileStatus").innerText = "Files loaded successfully!";
-    }
-
-    function searchEmployee() {
-        const id = document.getElementById("searchID").value.trim();
-        const emp = allData.find(e => e.id === id);
-
-        if (!emp) { alert("Employee not found."); return; }
-
-        // Employee info
-        document.getElementById("employeeInfo").style.display = "block";
-        empCat.innerText = emp.category;
-        empName.innerText = emp.name;
-        empDept.innerText = emp.dept;
-        empScore.innerText = emp.score;
-
-        // Filter same category + department
-        const group = categorized[emp.category].filter(e => e.dept === emp.dept);
-
-        // Count
-        document.getElementById("deptCount").innerText = group.length;
-
-        // Sort highest to lowest
-        group.sort((a, b) => b.score - a.score);
-
-        // Table
-        const tbody = document.querySelector("#deptTable tbody");
-        tbody.innerHTML = "";
-        group.forEach(p => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${p.id}</td>
-                    <td>${p.name}</td>
-                    <td>${p.score}</td>
-                </tr>`;
-        });
-
-        deptComparison.style.display = "block";
-
-        // Analysis
-        const avg = group.reduce((s, x) => s + x.score, 0) / group.length;
-        avgScore.innerText = avg.toFixed(2);
-        deptAnalysis.style.display = "block";
-
-        // Distribution
-        const dist = {1:0,2:0,3:0,4:0};
-        group.forEach(g => dist[g.score]++);
-
-        drawChart(dist);
-
-        // Recommendation logic
-        let rec = "";
-        const normal = dist[3] >= Math.max(dist[1], dist[2], dist[4]);
-
-        if (normal) {
-            rec = `Based on the department score distribution and the 
-            average score of ${avg.toFixed(2)}, the evaluation score appears 
-            aligned with peers. No changes are recommended.`;
-        } else {
-            rec = `The department shows anomalies in score distribution, 
-            with an average of ${avg.toFixed(2)}. A reconsideration of 
-            the evaluation score is recommended.`;
-        }
-
-        recText.innerText = rec;
-        recommendation.style.display = "block";
-    }
-
-    let chartObj = null;
-
-    function drawChart(dist) {
-        if (chartObj) chartObj.destroy();
-
-        const ctx = document.getElementById("scoreChart");
-        chartObj = new Chart(ctx, {
-            type: "bar",
-            data: {
-                labels: ["1","2","3","4"],
-                datasets: [{
-                    label: "Score Distribution",
-                    data: [dist[1], dist[2], dist[3], dist[4]],
-                    backgroundColor: ["#c62828","#ef6c00","#2e7d32","#1565c0"]
-                }]
-            }
-        });
-    }
-</script>
-
-</body>
-</html>
+  async function loadFiles(){
+    const professional = document.getElementById("fileProfessional").files[0];
