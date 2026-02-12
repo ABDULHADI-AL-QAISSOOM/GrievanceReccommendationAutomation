@@ -1,164 +1,554 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Staff Evaluation Grievance Analysis</title>
+  <meta charset="UTF-8" />
+  <title>Staff Evaluation Grievance Analysis</title>
 
-<!-- Fonts & Libraries -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" />
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Google Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" />
 
-<style>
-/* ---------- STYLES ---------- */
-:root{
---primary:#115f66;
---secondary:#009767;
---light-bg:#eef2f7;
---ink:#1f2937;
---muted:#6b7280;
---card:#ffffff;
-}
-*{box-sizing:border-box}
-body{
-font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-margin:0;background:var(--light-bg);color:var(--ink);
-}
-header{
-background:linear-gradient(135deg,var(--primary),var(--secondary));
-color:#fff;padding:28px 20px;text-align:center;
-font-size:26px;font-weight:600;letter-spacing:.3px;
-box-shadow:0 6px 20px rgba(0,0,0,.12);
-}
-.container{width:min(1100px,90%);margin:22px auto}
-.section{
-background:var(--card);padding:22px;border-radius:14px;
-box-shadow:0 8px 24px rgba(0,0,0,.08);margin-top:22px;
-animation:fadeIn .35s ease;
-}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-h2{color:var(--primary);margin:0 0 12px}
-p.help{color:var(--muted);margin:6px 0 14px}
-label{display:block;margin-top:10px;font-weight:600}
-input[type=file],input[type=number]{
-width:100%;padding:12px;margin-top:6px;border-radius:10px;border:1px solid #d1d5db;font-size:15px;background:#fff;
-}
-button{
-background:var(--primary);color:#fff;border:none;border-radius:10px;
-padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px;
-transition:all .25s ease;box-shadow:0 6px 14px rgba(17,95,102,.25);
-}
-button:hover{background:var(--secondary);transform:translateY(-1px)}
-.status{font-weight:600;color:var(--secondary);margin-top:10px}
-table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
-thead th{background:var(--primary);color:#fff;padding:12px;text-align:left;position:sticky;top:0}
-tbody td{padding:10px;border-bottom:1px solid #e5e7eb}
-.count-box{
-background:#ddf3e9;border-left:6px solid var(--secondary);
-padding:10px 12px;border-radius:10px;margin:6px 0 12px;font-weight:600;
-}
-.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
-.badge-ok{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7}
-.badge-warn{background:#fff3cd;color:#7a5a00;border:1px solid #ffe69c}
-.grid{display:grid;grid-template-columns:1fr;gap:18px}
-@media (min-width:900px){.grid{grid-template-columns:1fr 1fr}}
-canvas{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:8px}
-.muted{color:var(--muted)}
-.flex{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.small{font-size:13px}
-.pill{
-display:inline-flex;align-items:center;gap:6px;
-padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa;
-}
-</style>
+  <!-- SheetJS -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --primary:#115f66;
+      --secondary:#009767;
+      --light-bg:#eef2f7;
+      --ink:#1f2937;
+      --muted:#6b7280;
+      --card:#ffffff;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      margin:0;background:var(--light-bg);color:var(--ink);
+    }
+    header{
+      background:linear-gradient(135deg,var(--primary),var(--secondary));
+      color:#fff;padding:28px 20px;text-align:center;
+      font-size:26px;font-weight:600;letter-spacing:.3px;
+      box-shadow:0 6px 20px rgba(0,0,0,.12);
+    }
+    .container{width:min(1100px,90%);margin:22px auto}
+    .section{
+      background:var(--card);padding:22px;border-radius:14px;
+      box-shadow:0 8px 24px rgba(0,0,0,.08);margin-top:22px;
+      animation:fadeIn .35s ease;
+    }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    h2{color:var(--primary);margin:0 0 12px}
+    p.help{color:var(--muted);margin:6px 0 14px}
+    label{display:block;margin-top:10px;font-weight:600}
+    input[type=file],input[type=number]{
+      width:100%;padding:12px;margin-top:6px;border-radius:10px;border:1px solid #d1d5db;font-size:15px;background:#fff;
+    }
+    button{
+      background:var(--primary);color:#fff;border:none;border-radius:10px;
+      padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px;
+      transition:all .25s ease;box-shadow:0 6px 14px rgba(17,95,102,.25);
+    }
+    button:hover{background:var(--secondary);transform:translateY(-1px)}
+    .status{font-weight:600;color:var(--secondary);margin-top:10px}
+    table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
+    thead th{background:var(--primary);color:#fff;padding:12px;text-align:left;position:sticky;top:0}
+    tbody td{padding:10px;border-bottom:1px solid #e5e7eb}
+    .count-box{
+      background:#ddf3e9;border-left:6px solid var(--secondary);
+      padding:10px 12px;border-radius:10px;margin:6px 0 12px;font-weight:600;
+    }
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
+    .badge-ok{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7}
+    .badge-warn{background:#fff3cd;color:#7a5a00;border:1px solid #ffe69c}
+    .grid{display:grid;grid-template-columns:1fr;gap:18px}
+    @media (min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+    canvas{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:8px}
+    .muted{color:var(--muted)}
+    .flex{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .small{font-size:13px}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa;
+    }
+  </style>
 </head>
-
 <body>
-<header>Staff Evaluation Grievance Analysis</header>
+
+<header>
+  Staff Evaluation Grievance Analysis
+</header>
 
 <div class="container">
 
-<!-- Upload -->
-<div class="section">
-<h2>Upload Excel Files</h2>
-<p class="help">Upload staff evaluation Excel files in ORIGINAL APS format.</p>
+  <!-- Upload -->
+  <div class="section">
+    <h2>Upload Excel Files</h2>
+    <p class="help">
+      Please upload the staff category files in their original format (from APS) without alterations.<br>
+    </p>
 
-<label>Staff Professional</label>
-<input type="file" id="fileProfessional" accept=".xlsx,.xls" />
+    <label>Staff Professional</label>
+    <input type="file" id="fileProfessional" accept=".xlsx,.xls" />
 
-<label>Staff Support</label>
-<input type="file" id="fileSupport" accept=".xlsx,.xls" />
+    <label>Staff Support</label>
+    <input type="file" id="fileSupport" accept=".xlsx,.xls" />
 
-<label>Staff Chief</label>
-<input type="file" id="fileChief" accept=".xlsx,.xls" />
+    <label>Staff Chief</label>
+    <input type="file" id="fileChief" accept=".xlsx,.xls" />
 
-<button onclick="loadFiles()">Load Files</button>
-<div id="fileStatus" class="status"></div>
+    <button onclick="loadFiles()">Load Files</button>
+    <div id="fileStatus" class="status"></div>
+  </div>
+
+  <!-- Search -->
+  <div class="section">
+    <h2>Search Employee</h2>
+    <div class="flex">
+      <input type="number" id="searchID" placeholder="Enter KFUPM ID" />
+      <button onclick="searchEmployee()">Search</button>
+    </div>
+    <p class="small muted">Comparison includes employees from the <strong>same Department</strong> and the <strong>same Category</strong>.</p>
+  </div>
+
+  <!-- Employee Info -->
+  <div id="employeeInfo" class="section" style="display:none;">
+    <h2>Employee Information</h2>
+    <div class="flex">
+      <div class="pill"><strong>Name:</strong> <span id="empName"></span></div>
+      <div class="pill"><strong>Department:</strong> <span id="empDept"></span></div>
+      <div class="pill"><strong>Category:</strong> <span id="empCat"></span></div>
+      <div class="pill"><strong>Overall Score:</strong> <span id="empScore"></span></div>
+      <div class="pill"><strong>Total (100):</strong> <span id="empTotal"></span></div>
+    </div>
+  </div>
+
+  <!-- Department Comparison -->
+  <div id="deptComparison" class="section" style="display:none;">
+    <h2>Department Comparison</h2>
+    <div class="count-box">
+      Employees in this department (same category): <span id="deptCount"></span>
+    </div>
+
+    <table id="deptTable">
+      <thead>
+        <tr>
+          <th>KFUPM ID</th>
+          <th>Name</th>
+          <th>Total (100)</th>
+          <th>Overall Score</th>
+          <th>Flag</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- Department Analysis -->
+  <div id="deptAnalysis" class="section" style="display:none;">
+    <h2>Department Score Analysis</h2>
+    <div class="flex small muted">
+      <div><strong>Average Overall Score:</strong> <span id="avgScore"></span></div>
+    </div>
+
+    <div class="grid" style="margin-top:10px;">
+      <div>
+        <p class="small muted"><strong>Overall Score Distribution</strong> (1–5)</p>
+        <canvas id="scoreChart" height="180"></canvas>
+      </div>
+      <div>
+        <p class="small muted"><strong>Total (100) Distribution</strong> (0–100, binned)</p>
+        <canvas id="totalChart" height="180"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total by Overall Score -->
+  <div id="byScoreSection" class="section" style="display:none;">
+    <h2>Total (100) by Overall Score</h2>
+    <p class="small muted">These views show how Total (100) varies within each overall score group.</p>
+
+    <div class="grid" style="margin-top:10px;">
+      <div>
+        <p class="small muted"><strong>Grouped Histogram</strong> — Total (100) distribution per score</p>
+        <canvas id="totalByScoreChart" height="200"></canvas>
+      </div>
+      <div>
+        <p class="small muted"><strong>Scatter (Jitter)</strong> — Total (100) vs Overall Score</p>
+        <canvas id="scatterChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <div id="variationBadges" class="flex small" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- Recommendation -->
+  <div id="recommendation" class="section" style="display:none;">
+    <h2>Recommendation</h2>
+    <p id="recText"></p>
+  </div>
 </div>
 
-<!-- Search -->
-<div class="section">
-<h2>Search Employee</h2>
-<div class="flex">
-<input type="number" id="searchID" placeholder="Enter KFUPM ID" />
-<button onclick="searchEmployee()">Search</button>
-</div>
-<p class="small muted">Compares employee only to SAME department + SAME category.</p>
-</div>
+<script>
+  // ====== Config ======
+  const COLORS = {
+    primary: "#115f66",
+    secondary: "#009767",
+    cat1: "#c62828", // score 1
+    cat2: "#ef6c00", // score 2
+    cat3: "#009767", // score 3
+    cat4: "#115f66", // score 4
+    cat5: "#6a1b9a"  // score 5
+  };
+  const TOTAL_DELTA = 2;              // "Similar total" threshold (±2)
+  const VARIATION_STD_THRESHOLD = 10; // Std-dev threshold to flag "High variation"
 
-<!-- Employee Info -->
-<div id="employeeInfo" class="section" style="display:none;">
-<h2>Employee Information</h2>
-<div class="flex">
-<div class="pill"><strong>Name:</strong> <span id="empName"></span></div>
-<div class="pill"><strong>Department:</strong> <span id="empDept"></span></div>
-<div class="pill"><strong>Category:</strong> <span id="empCat"></span></div>
-<div class="pill"><strong>Overall Score:</strong> <span id="empScore"></span></div>
-<div class="pill"><strong>Total (100):</strong> <span id="empTotal"></span></div>
-</div>
-</div>
+  // ====== State ======
+  let categorized = { Professional: [], Support: [], Chief: [] };
+  let allData = [];
+  let scoreChartObj = null;
+  let totalChartObj = null;
+  let totalByScoreChartObj = null;
+  let scatterChartObj = null;
 
-<!-- Comparison Table -->
-<div id="deptComparison" class="section" style="display:none;">
-<h2>Department Comparison</h2>
-<div class="count-box">Employees in this department (same category): <span id="deptCount"></span></div>
+  // ====== Excel Loading ======
+  function readExcelFile(file, category){
+    return new Promise((resolve, reject) => {
+      if(!file) return resolve([]);
+      const reader = new FileReader();
+      reader.onload = e => {
+        try{
+          const workbook = XLSX.read(e.target.result, { type:"binary" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(sheet);
+          const cleaned = rows.map(r => ({
+            id: String(r["KFUPM ID"] ?? "").trim(),
+            name: String(r["Name"] ?? "").trim(),
+            dept: String(r["Department"] ?? "").trim(),
+            score: Number(r["Overall Score"]),
+            total: Number(r["Total (100)"]),
+            category
+          })).filter(x => x.id && x.name && x.dept && !Number.isNaN(x.score) && !Number.isNaN(x.total));
+          resolve(cleaned);
+        }catch(err){ reject(err); }
+      };
+      reader.onerror = reject;
+      reader.readAsBinaryString(file);
+    });
+  }
 
-<table id="deptTable">
-<thead>
-<tr>
-<th>KFUPM ID</th>
-<th>Name</th>
-<th>Total (100)</th>
-<th>Overall Score</th>
-<th>Flag</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
+  async function loadFiles(){
+    const professional = document.getElementById("fileProfessional").files[0];
+    const support = document.getElementById("fileSupport").files[0];
+    const chief = document.getElementById("fileChief").files[0];
 
-<!-- Department Analysis -->
-<div id="deptAnalysis" class="section" style="display:none;">
-<h2>Department Score Analysis</h2>
-<div class="flex small muted">
-<div><strong>Average Overall Score:</strong> <span id="avgScore"></span></div>
-</div>
+    const status = document.getElementById("fileStatus");
+    status.textContent = "Loading files...";
 
-<div class="grid" style="margin-top:10px;">
-<div>
-<p class="small muted"><strong>Overall Score Distribution</strong></p>
-<canvas id="scoreChart" height="180"></canvas>
-</div>
-<div>
-<p class="small muted"><strong>Total (100) Distribution</strong></p>
-<canvas id="totalChart" height="180"></canvas>
-</div>
-</div>
-</div>
+    try{
+      const [proData, supData, chfData] = await Promise.all([
+        readExcelFile(professional, "Professional"),
+        readExcelFile(support, "Support"),
+        readExcelFile(chief, "Chief"),
+      ]);
 
-<!-- Totals By Score -->
-<div id="byScoreSection" class="section" style="display:none;">
-<h2>Total (100) by Overall Score</h2>
-<p class="small muted">Shows distribution of Total (100) within each overall score.</p>
+      categorized = { Professional: proData, Support: supData, Chief: chfData };
+      allData = [...proData, ...supData, ...chfData];
 
-<div class="grid" style="margin-top:10px;">
+      const totalCount = allData.length;
+      status.textContent = `Files loaded successfully. Total records: ${totalCount} (Professional: ${proData.length}, Support: ${supData.length}, Chief: ${chfData.length}).`;
+
+    }catch(err){
+      console.error(err);
+      status.textContent = "Error loading files. Please check the format and try again.";
+    }
+  }
+
+  // ====== Utilities ======
+  function mean(arr){ if(arr.length===0) return 0; return arr.reduce((a,b)=>a+b,0)/arr.length; }
+  function stddev(arr){
+    if(arr.length<=1) return 0;
+    const m = mean(arr);
+    const v = arr.reduce((s,x)=>s + Math.pow(x-m,2),0) / (arr.length-1);
+    return Math.sqrt(v);
+  }
+  function binCounts(values, bins){
+    const counts = new Array(bins.length).fill(0);
+    values.forEach(v=>{
+      for(let i=0;i<bins.length;i++){
+        const [min,max] = bins[i];
+        if(v>=min && v<=max){ counts[i]++; break; }
+      }
+    });
+    return counts;
+  }
+
+  // ====== Main Search & Analysis ======
+  function searchEmployee(){
+    const id = String(document.getElementById("searchID").value || "").trim();
+    if(!id){ alert("Please enter a KFUPM ID."); return; }
+
+    const emp = allData.find(e => e.id === id);
+    if(!emp){ alert("Employee not found."); return; }
+
+    // Display employee info
+    document.getElementById("employeeInfo").style.display = "block";
+    document.getElementById("empName").textContent = emp.name;
+    document.getElementById("empDept").textContent = emp.dept;
+    document.getElementById("empCat").textContent = emp.category;
+    document.getElementById("empScore").textContent = emp.score;
+    document.getElementById("empTotal").textContent = emp.total;
+
+    // Group: same category + same department
+    const group = categorized[emp.category].filter(e => e.dept === emp.dept);
+
+    // Count
+    document.getElementById("deptCount").textContent = group.length;
+
+    // Flagging inconsistencies (Total vs Score)
+    const flaggedIds = new Set();
+    group.forEach(p=>{
+      const peersSimilarTotal = group.filter(q => q.id !== p.id && Math.abs(q.total - p.total) <= TOTAL_DELTA);
+      const higherOverallExists = peersSimilarTotal.some(q => q.score > p.score);
+      const higherTotalLowerScore = group.some(q => (p.total - q.total) > TOTAL_DELTA && p.score < q.score);
+      if(higherOverallExists || higherTotalLowerScore){
+        flaggedIds.add(p.id);
+      }
+    });
+
+    // Sort table by score desc, then total desc
+    group.sort((a,b)=> b.score - a.score || b.total - a.total);
+
+    // Populate table
+    const tbody = document.querySelector("#deptTable tbody");
+    tbody.innerHTML = "";
+    group.forEach(p => {
+      const isFlagged = flaggedIds.has(p.id);
+      const badge = isFlagged
+        ? `<span class="badge badge-warn" title="Total/Score inconsistency detected">⚠ Inconsistent</span>`
+        : `<span class="badge badge-ok">✓ OK</span>`;
+      tbody.insertAdjacentHTML("beforeend", `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.name}</td>
+          <td>${p.total}</td>
+          <td>${p.score}</td>
+          <td>${badge}</td>
+        </tr>
+      `);
+    });
+
+    document.getElementById("deptComparison").style.display = "block";
+
+    // Department analysis (overall)
+    const avg = group.reduce((s,x)=>s + x.score, 0) / (group.length || 1);
+    document.getElementById("avgScore").textContent = isFinite(avg) ? avg.toFixed(2) : "—";
+    document.getElementById("deptAnalysis").style.display = "block";
+
+    // Score distribution 1..5
+    const scoreDist = {1:0,2:0,3:0,4:0,5:0};
+    group.forEach(g => { if(scoreDist[g.score] !== undefined) scoreDist[g.score]++; });
+    drawScoreChart(scoreDist);
+
+    // Total (100) distribution overall (binned)
+    const totalBins = [[0,20],[21,40],[41,60],[61,80],[81,100]];
+    const totalCounts = binCounts(group.map(g=>g.total), totalBins);
+    drawTotalChart(totalBins, totalCounts);
+
+    // Per-score totals (grouped histogram + scatter + variation badges)
+    drawTotalByScoreCharts(group, totalBins);
+
+    // --- NEW RULE: within-distribution check for employee's score group ---
+    const sameScoreTotals = group.filter(g => Number(g.score) === Number(emp.score)).map(g => g.total);
+    let withinDistribution = true;
+    if (sameScoreTotals.length > 2) {
+      const sd = stddev(sameScoreTotals);
+      const avgSameScore = mean(sameScoreTotals);
+      const minAllowed = avgSameScore - sd;
+      const maxAllowed = avgSameScore + sd;
+      if (emp.total < minAllowed || emp.total > maxAllowed) {
+        withinDistribution = false;
+      }
+    }
+    // ---------------------------------------------------------------
+
+    // Recommendation: Case 1 vs Case 2
+    const employeeIsFlagged = flaggedIds.has(emp.id);
+    const normal =
+      (avg >= 2 && avg <= 3) &&                 // department normal band
+      (Math.abs(emp.score - avg) <= 1) &&       // employee score follows dept trend
+      !employeeIsFlagged &&                     // no inconsistencies
+      withinDistribution;                       // fits same-score distribution
+
+    let rec = "";
+    if (normal) {
+      // Case 1
+      rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend no changes in the evaluation score.`;
+    } else {
+      // Case 2
+      rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend a reconsideration of the evaluation score.`;
+    }
+    document.getElementById("recText").textContent = rec;
+    document.getElementById("recommendation").style.display = "block";
+  }
+
+  // ====== Charts ======
+  function drawScoreChart(dist){
+    if(scoreChartObj) scoreChartObj.destroy();
+    const ctx = document.getElementById("scoreChart");
+    scoreChartObj = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["1","2","3","4","5"],
+        datasets: [{
+          label: "Count",
+          data: [dist[1], dist[2], dist[3], dist[4], dist[5]],
+          backgroundColor: [
+            COLORS.cat1,      // 1
+            COLORS.cat2,      // 2
+            COLORS.cat3,      // 3
+            COLORS.cat4,      // 4
+            COLORS.cat5       // 5
+          ],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        plugins:{ legend:{ display:false }},
+        scales:{
+          y:{ beginAtZero:true, ticks:{ precision:0 } },
+          x:{ grid:{ display:false } }
+        }
+      }
+    });
+  }
+
+  function drawTotalChart(bins, counts){
+    if(totalChartObj) totalChartObj.destroy();
+    const ctx = document.getElementById("totalChart");
+    totalChartObj = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: bins.map(b => `${b[0]}–${b[1]}`),
+        datasets: [{
+          label: "Count",
+          data: counts,
+          backgroundColor: COLORS.primary,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        plugins:{ legend:{ display:false }},
+        scales:{
+          y:{ beginAtZero:true, ticks:{ precision:0 }},
+          x:{ grid:{ display:false }}
+        }
+      }
+    });
+  }
+
+  // Per-score distributions (1..5)
+  function drawTotalByScoreCharts(group, bins){
+    // Show section
+    document.getElementById("byScoreSection").style.display = "block";
+
+    // Build per-score arrays of totals
+    const totalsByScore = {1:[],2:[],3:[],4:[],5:[]};
+    group.forEach(g => {
+      const s = Number(g.score);
+      if (totalsByScore[s]) totalsByScore[s].push(g.total);
+    });
+
+    // Grouped histogram (datasets per score 1..5)
+    const datasets = [1,2,3,4,5].map(s => {
+      const color = [COLORS.cat1, COLORS.cat2, COLORS.cat3, COLORS.cat4, COLORS.cat5][s-1];
+      return {
+        label: `Score ${s}`,
+        backgroundColor: color + "cc", // slight transparency
+        borderColor: color,
+        data: binCounts(totalsByScore[s], bins)
+      };
+    });
+
+    if(totalByScoreChartObj) totalByScoreChartObj.destroy();
+    totalByScoreChartObj = new Chart(document.getElementById("totalByScoreChart"), {
+      type: "bar",
+      data: {
+        labels: bins.map(b=>`${b[0]}–${b[1]}`),
+        datasets
+      },
+      options: {
+        responsive:true,
+        plugins:{ legend:{ position:"top" } },
+        scales: {
+          y:{ beginAtZero:true, ticks:{ precision:0 } },
+          x:{ stacked:false, grid:{ display:false } }
+        }
+      }
+    });
+
+    // Scatter (jitter) plot: x = score (1..5), y = total
+    const scatterDatasets = [1,2,3,4,5].map(s => {
+      const color = [COLORS.cat1, COLORS.cat2, COLORS.cat3, COLORS.cat4, COLORS.cat5][s-1];
+      const points = totalsByScore[s].map(v => ({
+        x: s + (Math.random()-0.5)*0.2, // jitter ±0.1
+        y: v
+      }));
+      return {
+        label: `Score ${s}`,
+        data: points,
+        backgroundColor: color,
+        borderColor: color,
+        showLine: false,
+        pointRadius: 4
+      };
+    });
+
+    if(scatterChartObj) scatterChartObj.destroy();
+    scatterChartObj = new Chart(document.getElementById("scatterChart"), {
+      type: "scatter",
+      data: { datasets: scatterDatasets },
+      options: {
+        plugins:{ legend:{ position:"top" } },
+        scales: {
+          x: {
+            type: "linear",
+            min: 0.5, max: 5.5,
+            ticks: {
+              stepSize: 1,
+              callback: (v)=> [1,2,3,4,5].includes(v) ? v : ""
+            },
+            title: { display:true, text:"Overall Score" },
+            grid:{ display:false }
+          },
+          y: {
+            min: 0, max: 100,
+            title: { display:true, text:"Total (100)" },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+
+    // Variation badges (std dev per score group for 1..5)
+    const vb = document.getElementById("variationBadges");
+    vb.innerHTML = "";
+    [1,2,3,4,5].forEach(s=>{
+      const vals = totalsByScore[s];
+      if(vals.length === 0) return;
+      const sd = stddev(vals);
+      const cl = sd >= VARIATION_STD_THRESHOLD ? "badge-warn" : "badge-ok";
+      const label = sd >= VARIATION_STD_THRESHOLD ? "High variation" : "Low variation";
+      vb.insertAdjacentHTML("beforeend",
+        `<span class="badge ${cl}" title="Std Dev = ${sd.toFixed(1)} for score ${s}">
+           Score ${s}: ${label} (σ=${sd.toFixed(1)})
+         </span>`
+      );
+    });
+  }
+</script>
+
+</body>
+</html>
