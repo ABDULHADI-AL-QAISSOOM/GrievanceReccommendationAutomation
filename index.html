@@ -86,7 +86,7 @@
   <!-- Upload -->
   <div class="section">
     <h2>Upload Excel Files</h2>
-    <p class="help">Please upload the staff category files in their original format, directly extracted from APS, without any alterations.</p>
+    <p class="help">Please upload the staff category files in their original format, directly extracted from APS, without any alterations. Required columns: <strong>KFUPM ID</strong>, <strong>Name</strong>, <strong>Department</strong>, <strong>Overall Score</strong>, <strong>Total (100)</strong>.</p>
 
     <label>Staff Professional</label>
     <input type="file" id="fileProfessional" accept=".xlsx,.xls" />
@@ -153,7 +153,7 @@
 
     <div class="grid" style="margin-top:10px;">
       <div>
-        <p class="small muted"><strong>Overall Score Distribution</strong> (1–4)</p>
+        <p class="small muted"><strong>Overall Score Distribution</strong> (1–5)</p>
         <canvas id="scoreChart" height="180"></canvas>
       </div>
       <div>
@@ -163,7 +163,7 @@
     </div>
   </div>
 
-  <!-- NEW: Total by Overall Score -->
+  <!-- Total by Overall Score -->
   <div id="byScoreSection" class="section" style="display:none;">
     <h2>Total (100) by Overall Score</h2>
     <p class="small muted">These views help you see whether Total (100) varies a lot within each overall score group.</p>
@@ -194,12 +194,13 @@
   const COLORS = {
     primary: "#115f66",
     secondary: "#009767",
-    cat1: "#c62828",
-    cat2: "#ef6c00",
-    cat3: "#009767",
-    cat4: "#115f66"
+    cat1: "#c62828", // score 1
+    cat2: "#ef6c00", // score 2
+    cat3: "#009767", // score 3
+    cat4: "#115f66", // score 4
+    cat5: "#6a1b9a"  // score 5
   };
-  const TOTAL_DELTA = 2;           // "Similar total" threshold (±2 points)
+  const TOTAL_DELTA = 2;             // "Similar total" threshold (±2 points)
   const VARIATION_STD_THRESHOLD = 10; // Std-dev threshold to flag "High variation"
 
   // ====== State ======
@@ -343,8 +344,8 @@
     document.getElementById("avgScore").textContent = isFinite(avg) ? avg.toFixed(2) : "—";
     document.getElementById("deptAnalysis").style.display = "block";
 
-    // Score distribution 1..4
-    const scoreDist = {1:0,2:0,3:0,4:0};
+    // Score distribution 1..5
+    const scoreDist = {1:0,2:0,3:0,4:0,5:0};
     group.forEach(g => { if(scoreDist[g.score] !== undefined) scoreDist[g.score]++; });
     drawScoreChart(scoreDist);
 
@@ -353,7 +354,7 @@
     const totalCounts = binCounts(group.map(g=>g.total), totalBins);
     drawTotalChart(totalBins, totalCounts);
 
-    // ====== NEW: Total by Overall Score ======
+    // Total by Overall Score (grouped + scatter + variation)
     drawTotalByScoreCharts(group, totalBins);
 
     // Recommendation: Case 1 vs Case 2
@@ -377,11 +378,17 @@
     scoreChartObj = new Chart(ctx, {
       type: "bar",
       data: {
-        labels: ["1","2","3","4"],
+        labels: ["1","2","3","4","5"],
         datasets: [{
           label: "Count",
-          data: [dist[1], dist[2], dist[3], dist[4]],
-          backgroundColor: [ "#c62828", "#ef6c00", COLORS.secondary, COLORS.primary ],
+          data: [dist[1], dist[2], dist[3], dist[4], dist[5]],
+          backgroundColor: [
+            COLORS.cat1,      // 1
+            COLORS.cat2,      // 2
+            COLORS.cat3,      // 3
+            COLORS.cat4,      // 4
+            COLORS.cat5       // 5
+          ],
           borderRadius: 6
         }]
       },
@@ -419,18 +426,21 @@
     });
   }
 
-  // ====== NEW: Per-score distributions ======
+  // ====== Per-score distributions (now 1..5) ======
   function drawTotalByScoreCharts(group, bins){
     // Show section
     document.getElementById("byScoreSection").style.display = "block";
 
     // Build per-score arrays of totals
-    const totalsByScore = {1:[],2:[],3:[],4:[]};
-    group.forEach(g => { if(totalsByScore[g.score]) totalsByScore[g.score].push(g.total); });
+    const totalsByScore = {1:[],2:[],3:[],4:[],5:[]};
+    group.forEach(g => {
+      const s = Number(g.score);
+      if (totalsByScore[s]) totalsByScore[s].push(g.total);
+    });
 
-    // 1) Grouped histogram (bins × 5 ranges, datasets = scores 1..4)
-    const datasets = [1,2,3,4].map(s => {
-      const color = [COLORS.cat1, COLORS.cat2, COLORS.cat3, COLORS.cat4][s-1];
+    // Grouped histogram (datasets per score 1..5)
+    const datasets = [1,2,3,4,5].map(s => {
+      const color = [COLORS.cat1, COLORS.cat2, COLORS.cat3, COLORS.cat4, COLORS.cat5][s-1];
       return {
         label: `Score ${s}`,
         backgroundColor: color + "cc", // slight transparency
@@ -456,10 +466,9 @@
       }
     });
 
-    // 2) Scatter (jitter) plot: x = score (1..4) + jitter, y = total
-    // Build datasets per score for color separation
-    const scatterDatasets = [1,2,3,4].map(s => {
-      const color = [COLORS.cat1, COLORS.cat2, COLORS.cat3, COLORS.cat4][s-1];
+    // Scatter (jitter) plot: x = score (1..5), y = total
+    const scatterDatasets = [1,2,3,4,5].map(s => {
+      const color = [COLORS.cat1, COLORS.cat2, COLORS.cat3, COLORS.cat4, COLORS.cat5][s-1];
       const points = totalsByScore[s].map(v => ({
         x: s + (Math.random()-0.5)*0.2, // jitter ±0.1
         y: v
@@ -483,10 +492,10 @@
         scales: {
           x: {
             type: "linear",
-            min: 0.5, max: 4.5,
+            min: 0.5, max: 5.5,
             ticks: {
               stepSize: 1,
-              callback: (v)=> [1,2,3,4].includes(v) ? v : ""
+              callback: (v)=> [1,2,3,4,5].includes(v) ? v : ""
             },
             title: { display:true, text:"Overall Score" },
             grid:{ display:false }
@@ -500,10 +509,10 @@
       }
     });
 
-    // Variation badges (std dev per score group)
+    // Variation badges (std dev per score group for 1..5)
     const vb = document.getElementById("variationBadges");
     vb.innerHTML = "";
-    [1,2,3,4].forEach(s=>{
+    [1,2,3,4,5].forEach(s=>{
       const vals = totalsByScore[s];
       if(vals.length === 0) return;
       const sd = stddev(vals);
