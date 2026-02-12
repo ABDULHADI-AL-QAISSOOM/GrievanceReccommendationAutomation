@@ -387,55 +387,8 @@
       // Case 1
       rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend no changes in the evaluation score.`;
     } else {
-
-      } else {
-
-    // ===== CASE 2 — Intelligent Recommendation =====
-    let reasons = [];
-
-    // 1. Peer inconsistency
-    const peersWithLowerTotalHigherScore = group.filter(p =>
-      p.total < emp.total && p.score > emp.score
-    );
-    if (peersWithLowerTotalHigherScore.length > 0) {
-      reasons.push(
-        `Several peers with lower Total (100) received higher overall scores, indicating inconsistency in evaluation application.`
-      );
-    }
-
-    // 2. Employee outside distribution
-    if (!withinDistribution) {
-      reasons.push(
-        `The employee’s Total (100) falls significantly outside the distribution of others who received the same overall score.`
-      );
-    }
-
-    // 3. High variation groups
-    const highVarGroups = [];
-    [1, 2, 3, 4, 5].forEach(s => {
-      const vals = group.filter(g => g.score === s).map(g => g.total);
-      if (vals.length > 1 && stddev(vals) >= VARIATION_STD_THRESHOLD) {
-        highVarGroups.push(s);
-      }
-    });
-    if (highVarGroups.length > 0) {
-      reasons.push(
-        `Significant variation was observed within score groups ${highVarGroups.join(", ")}, suggesting inconsistent scoring practices.`
-      );
-    }
-
-    // 4. Department average
-    reasons.push(
-      `The department’s average rating of ${avg.toFixed(2)} further indicates irregular scoring patterns.`
-    );
-
-    // 5. Final recommendation
-    reasons.push(
-      `Accordingly, the APS Team recommends reconsideration of the assigned evaluation score.`
-    );
-
-    rec = reasons.join(" ");
-}
+      // Case 2
+      rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend a reconsideration of the evaluation score.`;
     }
     document.getElementById("recText").textContent = rec;
     document.getElementById("recommendation").style.display = "block";
