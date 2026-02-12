@@ -3,7 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <title>Staff Evaluation Grievance Analysis</title>
-
+<button id="exportPDF" style="
+  background:#115f66;
+  color:white;
+  padding:10px 18px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  margin-bottom:18px;
+  font-weight:600;
+">
+  Export Page as PDF
+</button>
   <!-- Google Font -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" />
 
@@ -709,7 +720,52 @@ document.querySelectorAll("#deptTable thead tr:first-child th").forEach(th => {
 document.querySelectorAll("#filterRow input, #filterRow select").forEach(el => {
   el.addEventListener("input", applyFiltersAndSorting);
 });
+/* ========================= PAGE PDF EXPORT ========================= */
 
+function exportPageToPDF() {
+    const originalTitle = document.title;
+    document.title = "Staff Evaluation Report";
+
+    const printWindow = window.open('', '_blank');
+
+    printWindow.document.open();
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Export</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              zoom: 80%; /* Adjust scale as needed */
+            }
+            table {
+              border-collapse: collapse;
+              width: 100%;
+            }
+            th, td {
+              border: 1px solid #ccc;
+              padding: 6px;
+            }
+          </style>
+        </head>
+        <body>
+          ${document.body.innerHTML}
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+
+    // Wait for content to load before printing
+    printWindow.onload = function () {
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+        document.title = originalTitle;
+    };
+}
+
+document.getElementById("exportPDF").addEventListener("click", exportPageToPDF);
 </script>
 
 </body>
