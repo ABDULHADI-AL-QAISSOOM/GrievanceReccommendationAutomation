@@ -362,9 +362,9 @@
 
     let rec = "";
     if (normal) {
-      rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend no changes in the evaluation score.`;
+      rec = `Following a review of evaluations over the past three years, along with a comparative analysis of the employee’s recent evaluation against peer scores and evaluation components within the same department, and in view of the department’s average rating of ${avg.toFixed(2)}, we recommend maintaining the current evaluation score.`;
     } else {
-      rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend a reconsideration of the evaluation score.`;
+      rec = `Following a comprehensive review of evaluations conducted over the past three years, along with a comparative assessment of the employee’s most recent evaluation against peers within the same department, and in consideration of the department’s average rating of ${avg.toFixed(2)}, we recommend a reassessment of the evaluation score.`;
     }
     document.getElementById("recText").textContent = rec;
     document.getElementById("recommendation").style.display = "block";
