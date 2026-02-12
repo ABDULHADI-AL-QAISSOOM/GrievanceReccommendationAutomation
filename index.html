@@ -86,7 +86,9 @@
   <!-- Upload -->
   <div class="section">
     <h2>Upload Excel Files</h2>
-    <p class="help">Please upload the staff category files in their original format, directly extracted from APS, without any alterations. Required columns: <strong>KFUPM ID</strong>, <strong>Name</strong>, <strong>Department</strong>, <strong>Overall Score</strong>, <strong>Total (100)</strong>.</p>
+    <p class="help">
+      Please upload the staff category files in their original format (from APS) without alterations.<br>
+    </p>
 
     <label>Staff Professional</label>
     <input type="file" id="fileProfessional" accept=".xlsx,.xls" />
@@ -108,7 +110,7 @@
       <input type="number" id="searchID" placeholder="Enter KFUPM ID" />
       <button onclick="searchEmployee()">Search</button>
     </div>
-    <p class="small muted">The comparison includes only employees from the <strong>same Department</strong> and the <strong>same Category</strong>.</p>
+    <p class="small muted">Comparison includes employees from the <strong>same Department</strong> and the <strong>same Category</strong>.</p>
   </div>
 
   <!-- Employee Info -->
@@ -166,7 +168,7 @@
   <!-- Total by Overall Score -->
   <div id="byScoreSection" class="section" style="display:none;">
     <h2>Total (100) by Overall Score</h2>
-    <p class="small muted">These views help you see whether Total (100) varies a lot within each overall score group.</p>
+    <p class="small muted">These views show how Total (100) varies within each overall score group.</p>
 
     <div class="grid" style="margin-top:10px;">
       <div>
@@ -200,7 +202,7 @@
     cat4: "#115f66", // score 4
     cat5: "#6a1b9a"  // score 5
   };
-  const TOTAL_DELTA = 2;             // "Similar total" threshold (±2 points)
+  const TOTAL_DELTA = 2;              // "Similar total" threshold (±2)
   const VARIATION_STD_THRESHOLD = 10; // Std-dev threshold to flag "High variation"
 
   // ====== State ======
@@ -211,7 +213,7 @@
   let totalByScoreChartObj = null;
   let scatterChartObj = null;
 
-  // ====== Excel Loading Helpers ======
+  // ====== Excel Loading ======
   function readExcelFile(file, category){
     return new Promise((resolve, reject) => {
       if(!file) return resolve([]);
@@ -283,6 +285,7 @@
     return counts;
   }
 
+  // ====== Main Search & Analysis ======
   function searchEmployee(){
     const id = String(document.getElementById("searchID").value || "").trim();
     if(!id){ alert("Please enter a KFUPM ID."); return; }
@@ -304,7 +307,7 @@
     // Count
     document.getElementById("deptCount").textContent = group.length;
 
-    // Flagging inconsistencies
+    // Flagging inconsistencies (Total vs Score)
     const flaggedIds = new Set();
     group.forEach(p=>{
       const peersSimilarTotal = group.filter(q => q.id !== p.id && Math.abs(q.total - p.total) <= TOTAL_DELTA);
@@ -354,18 +357,38 @@
     const totalCounts = binCounts(group.map(g=>g.total), totalBins);
     drawTotalChart(totalBins, totalCounts);
 
-    // Total by Overall Score (grouped + scatter + variation)
+    // Per-score totals (grouped histogram + scatter + variation badges)
     drawTotalByScoreCharts(group, totalBins);
+
+    // --- NEW RULE: within-distribution check for employee's score group ---
+    const sameScoreTotals = group.filter(g => Number(g.score) === Number(emp.score)).map(g => g.total);
+    let withinDistribution = true;
+    if (sameScoreTotals.length > 2) {
+      const sd = stddev(sameScoreTotals);
+      const avgSameScore = mean(sameScoreTotals);
+      const minAllowed = avgSameScore - sd;
+      const maxAllowed = avgSameScore + sd;
+      if (emp.total < minAllowed || emp.total > maxAllowed) {
+        withinDistribution = false;
+      }
+    }
+    // ---------------------------------------------------------------
 
     // Recommendation: Case 1 vs Case 2
     const employeeIsFlagged = flaggedIds.has(emp.id);
-    const normal = (avg >= 2 && avg <= 3) && (Math.abs(emp.score - avg) <= 1) && !employeeIsFlagged;
+    const normal =
+      (avg >= 2 && avg <= 3) &&                 // department normal band
+      (Math.abs(emp.score - avg) <= 1) &&       // employee score follows dept trend
+      !employeeIsFlagged &&                     // no inconsistencies
+      withinDistribution;                       // fits same-score distribution
 
     let rec = "";
     if (normal) {
-      rec = `Following a review of evaluations over the past three years, along with a comparative analysis of the employee’s recent evaluation against peer scores and evaluation components within the same department, and in view of the department’s average rating of ${avg.toFixed(2)}, we recommend maintaining the current evaluation score.`;
+      // Case 1
+      rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend no changes in the evaluation score.`;
     } else {
-      rec = `Following a comprehensive review of evaluations conducted over the past three years, along with a comparative assessment of the employee’s most recent evaluation against peers within the same department, and in consideration of the department’s average rating of ${avg.toFixed(2)}, we recommend a reassessment of the evaluation score.`;
+      // Case 2
+      rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend a reconsideration of the evaluation score.`;
     }
     document.getElementById("recText").textContent = rec;
     document.getElementById("recommendation").style.display = "block";
@@ -426,7 +449,7 @@
     });
   }
 
-  // ====== Per-score distributions (now 1..5) ======
+  // Per-score distributions (1..5)
   function drawTotalByScoreCharts(group, bins){
     // Show section
     document.getElementById("byScoreSection").style.display = "block";
