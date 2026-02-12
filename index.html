@@ -3,11 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <title>Staff Evaluation Grievance Analysis</title>
+
+<!-- Fonts & Libraries -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" />
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <style>
-/* ------- STYLES (UNCHANGED) ------- */
+/* ---------- STYLES ---------- */
 :root{
 --primary:#115f66;
 --secondary:#009767;
@@ -75,13 +78,20 @@ padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa
 
 <div class="container">
 
-<!-- Upload Section -->
+<!-- Upload -->
 <div class="section">
 <h2>Upload Excel Files</h2>
-<p class="help">Please upload the staff category files in their original format (from APS).</p>
-<label>Staff Professional</label><input type="file" id="fileProfessional" accept=".xlsx,.xls" />
-<label>Staff Support</label><input type="file" id="fileSupport" accept=".xlsx,.xls" />
-<label>Staff Chief</label><input type="file" id="fileChief" accept=".xlsx,.xls" />
+<p class="help">Upload staff evaluation Excel files in ORIGINAL APS format.</p>
+
+<label>Staff Professional</label>
+<input type="file" id="fileProfessional" accept=".xlsx,.xls" />
+
+<label>Staff Support</label>
+<input type="file" id="fileSupport" accept=".xlsx,.xls" />
+
+<label>Staff Chief</label>
+<input type="file" id="fileChief" accept=".xlsx,.xls" />
+
 <button onclick="loadFiles()">Load Files</button>
 <div id="fileStatus" class="status"></div>
 </div>
@@ -93,7 +103,7 @@ padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa
 <input type="number" id="searchID" placeholder="Enter KFUPM ID" />
 <button onclick="searchEmployee()">Search</button>
 </div>
-<p class="small muted">Comparison includes employees from the <strong>same Department</strong> and <strong>same Category</strong>.</p>
+<p class="small muted">Compares employee only to SAME department + SAME category.</p>
 </div>
 
 <!-- Employee Info -->
@@ -112,10 +122,17 @@ padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa
 <div id="deptComparison" class="section" style="display:none;">
 <h2>Department Comparison</h2>
 <div class="count-box">Employees in this department (same category): <span id="deptCount"></span></div>
+
 <table id="deptTable">
-<thead><tr>
-<th>KFUPM ID</th><th>Name</th><th>Total (100)</th><th>Overall Score</th><th>Flag</th>
-</tr></thead>
+<thead>
+<tr>
+<th>KFUPM ID</th>
+<th>Name</th>
+<th>Total (100)</th>
+<th>Overall Score</th>
+<th>Flag</th>
+</tr>
+</thead>
 <tbody></tbody>
 </table>
 </div>
@@ -126,151 +143,22 @@ padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa
 <div class="flex small muted">
 <div><strong>Average Overall Score:</strong> <span id="avgScore"></span></div>
 </div>
+
 <div class="grid" style="margin-top:10px;">
-<div><p class="small muted"><strong>Overall Score Distribution</strong></p><canvas id="scoreChart" height="180"></canvas></div>
-<div><p class="small muted"><strong>Total (100) Distribution</strong></p><canvas id="totalChart" height="180"></canvas></div>
+<div>
+<p class="small muted"><strong>Overall Score Distribution</strong></p>
+<canvas id="scoreChart" height="180"></canvas>
+</div>
+<div>
+<p class="small muted"><strong>Total (100) Distribution</strong></p>
+<canvas id="totalChart" height="180"></canvas>
+</div>
 </div>
 </div>
 
-<!-- Grouped Totals -->
+<!-- Totals By Score -->
 <div id="byScoreSection" class="section" style="display:none;">
 <h2>Total (100) by Overall Score</h2>
-<p class="small muted">Shows how Total (100) varies within each overall score group.</p>
+<p class="small muted">Shows distribution of Total (100) within each overall score.</p>
+
 <div class="grid" style="margin-top:10px;">
-<div><canvas id="totalByScoreChart" height="200"></canvas></div>
-<div><canvas id="scatterChart" height="200"></canvas></div>
-</div>
-<div id="variationBadges" class="flex small" style="margin-top:10px;"></div>
-</div>
-
-<!-- Recommendation -->
-<div id="recommendation" class="section" style="display:none;">
-<h2>Recommendation</h2>
-<p id="recText"></p>
-</div>
-
-</div>
-
-<script>
-/* ========================================================================
-   CONFIG + DATA
-   ======================================================================== */
-const COLORS = {
-primary: "#115f66",
-secondary: "#009767",
-cat1: "#c62828",
-cat2: "#ef6c00",
-cat3: "#009767",
-cat4: "#115f66",
-cat5: "#6a1b9a"
-};
-
-const TOTAL_DELTA = 2;
-const VARIATION_STD_THRESHOLD = 10;
-
-let categorized = { Professional: [], Support: [], Chief: [] };
-let allData = [];
-
-let scoreChartObj = null;
-let totalChartObj = null;
-let totalByScoreChartObj = null;
-let scatterChartObj = null;
-
-/* ========================================================================
-   UTILITY FUNCTIONS
-   ======================================================================== */
-function mean(arr){
-if(arr.length===0) return 0;
-return arr.reduce((a,b)=>a+b,0)/arr.length;
-}
-function stddev(arr){
-if(arr.length<=1) return 0;
-const m = mean(arr);
-const v = arr.reduce((s,x)=>s + Math.pow(x-m,2),0) / (arr.length-1);
-return Math.sqrt(v);
-}
-function binCounts(values, bins){
-const counts = new Array(bins.length).fill(0);
-values.forEach(v=>{
-for(let i=0;i<bins.length;i++){
-const [min,max] = bins[i];
-if(v>=min && v<=max){ counts[i]++; break; }
-}
-});
-return counts;
-}
-
-/* ========================================================================
-   LOAD FILES
-   ======================================================================== */
-function readExcelFile(file, category){
-return new Promise((resolve, reject)=>{
-if(!file) return resolve([]);
-
-const reader = new FileReader();
-reader.onload = e=>{
-try{
-const workbook = XLSX.read(e.target.result, { type:"binary" });
-const sheet = workbook.Sheets[workbook.SheetNames[0]];
-const rows = XLSX.utils.sheet_to_json(sheet);
-
-const cleaned = rows.map(r=>({
-id: String(r["KFUPM ID"] ?? "").trim(),
-name: String(r["Name"] ?? "").trim(),
-dept: String(r["Department"] ?? "").trim(),
-score: Number(r["Overall Score"]),
-total: Number(r["Total (100)"]),
-category
-})).filter(x=>x.id && x.name && x.dept && !Number.isNaN(x.score) && !Number.isNaN(x.total));
-
-resolve(cleaned);
-}catch(err){ reject(err); }
-};
-reader.onerror = reject;
-reader.readAsBinaryString(file);
-});
-}
-
-async function loadFiles(){
-const professional = document.getElementById("fileProfessional").files[0];
-const support = document.getElementById("fileSupport").files[0];
-const chief = document.getElementById("fileChief").files[0];
-
-const status = document.getElementById("fileStatus");
-status.textContent = "Loading files...";
-
-try{
-const [proData, supData, chfData] = await Promise.all([
-readExcelFile(professional, "Professional"),
-readExcelFile(support, "Support"),
-readExcelFile(chief, "Chief")
-]);
-
-categorized = { Professional: proData, Support: supData, Chief: chfData };
-allData = [...proData, ...supData, ...chfData];
-
-status.textContent =
-`Files loaded successfully. Total records: ${allData.length} (Professional: ${proData.length}, Support: ${supData.length}, Chief: ${chfData.length}).`;
-
-}catch(err){
-console.error(err);
-status.textContent = "Error loading files.";
-}
-}
-
-/* ========================================================================
-   SEARCH + ANALYSIS LOGIC
-   ======================================================================== */
-function searchEmployee(){
-const id = String(document.getElementById("searchID").value).trim();
-if(!id){ alert("Please enter a KFUPM ID."); return; }
-
-const emp = allData.find(e=>e.id===id);
-if(!emp){ alert("Employee not found."); return; }
-
-/* --- Display employee info --- */
-document.getElementById("employeeInfo").style.display="block";
-document.getElementById("empName").textContent = emp.name;
-document.getElementById("empDept").textContent = emp.dept;
-document.getElementById("empCat").textContent = emp.category;
-document.getElementById("empScore").textContent = emp.score;
