@@ -134,13 +134,31 @@
 
     <table id="deptTable">
       <thead>
-        <tr>
-          <th>KFUPM ID</th>
-          <th>Name</th>
-          <th>Total (100)</th>
-          <th>Overall Score</th>
-          <th>Flag</th>
-        </tr>
+        
+<!-- Sortable Header Row -->
+  <tr>
+    <th data-col="id">KFUPM ID</th>
+    <th data-col="name">Name</th>
+    <th data-col="total">Total (100)</th>
+    <th data-col="score">Overall Score</th>
+    <th data-col="flag">Flag</th>
+  </tr>
+
+  <!-- Filter Row -->
+  <tr id="filterRow">
+    <th><input type="text" id="filterID" placeholder="Filter ID" class="small"></th>
+    <th><input type="text" id="filterName" placeholder="Filter Name" class="small"></th>
+    <th><input type="text" id="filterTotal" placeholder="Filter Total" class="small"></th>
+    <th><input type="text" id="filterScore" placeholder="Filter Score" class="small"></th>
+    <th>
+      <select id="filterFlag" class="small">
+        <option value="">All</option>
+        <option value="OK">OK</option>
+        <option value="Inconsistent">Inconsistent</option>
+      </select>
+    </th>
+  </tr>
+
       </thead>
       <tbody></tbody>
     </table>
@@ -321,24 +339,16 @@
     // Sort table by score desc, then total desc
     group.sort((a,b)=> b.score - a.score || b.total - a.total);
 
-    // Populate table
-    const tbody = document.querySelector("#deptTable tbody");
-    tbody.innerHTML = "";
-    group.forEach(p => {
-      const isFlagged = flaggedIds.has(p.id);
-      const badge = isFlagged
-        ? `<span class="badge badge-warn" title="Total/Score inconsistency detected">⚠ Inconsistent</span>`
-        : `<span class="badge badge-ok">✓ OK</span>`;
-      tbody.insertAdjacentHTML("beforeend", `
-        <tr>
-          <td>${p.id}</td>
-          <td>${p.name}</td>
-          <td>${p.total}</td>
-          <td>${p.score}</td>
-          <td>${badge}</td>
-        </tr>
-      `);
-    });
+  // Save table data for sorting/filtering and render via the engine
+lastDeptGroup = group.map(p => ({
+  id: p.id,
+  name: p.name,
+  total: p.total,
+  score: p.score,
+  flagged: flaggedIds.has(p.id) // boolean
+}));
+
+applyFiltersAndSorting();
 
     document.getElementById("deptComparison").style.display = "block";
 
@@ -594,6 +604,112 @@
       );
     });
   }
+
+/* ============================ SORTING & FILTERING ENGINE ============================ */
+
+// Default sort to match your previous behavior: Score (desc)
+let currentSort = { column: 'score', asc: false };
+
+// Will hold current department rows (set inside searchEmployee)
+let lastDeptGroup = [];
+
+// Map table header 'data-col' → object key
+const COL_MAP = { id: 'id', name: 'name', total: 'total', score: 'score', flag: 'flagged' };
+
+// Main re-render function (applies filters, sort, and renders)
+function applyFiltersAndSorting() {
+  const tbody = document.querySelector("#deptTable tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  // Read filters
+  const fID = (document.getElementById("filterID")?.value || "").toLowerCase();
+  const fName = (document.getElementById("filterName")?.value || "").toLowerCase();
+  const fTotal = (document.getElementById("filterTotal")?.value || "").trim();
+  const fScore = (document.getElementById("filterScore")?.value || "").trim();
+  const fFlag = (document.getElementById("filterFlag")?.value || "").trim();
+
+  // Filter dataset
+  let rows = lastDeptGroup.filter(r => {
+    const flagText = r.flagged ? "Inconsistent" : "OK";
+    return (
+      (fID === "" || String(r.id).toLowerCase().includes(fID)) &&
+      (fName === "" || String(r.name).toLowerCase().includes(fName)) &&
+      (fTotal === "" || String(r.total).includes(fTotal)) &&
+      (fScore === "" || String(r.score).includes(fScore)) &&
+      (fFlag === "" || flagText === fFlag)
+    );
+  });
+
+  // Sorting
+  if (currentSort.column) {
+    const key = COL_MAP[currentSort.column] || currentSort.column;
+
+    rows.sort((a, b) => {
+      let v1 = a[key];
+      let v2 = b[key];
+
+      // Normalize types for proper comparison
+      if (key === 'id' || key === 'name') {
+        v1 = String(v1).toLowerCase();
+        v2 = String(v2).toLowerCase();
+      } else if (key === 'total' || key === 'score') {
+        v1 = Number(v1);
+        v2 = Number(v2);
+      } else if (key === 'flagged') {
+        // false < true → OK before Inconsistent
+        v1 = !!v1;
+        v2 = !!v2;
+      }
+
+      if (v1 < v2) return currentSort.asc ? -1 : 1;
+      if (v1 > v2) return currentSort.asc ?  1 : -1;
+      return 0;
+    });
+  }
+
+  // Render rows
+  rows.forEach(r => {
+    const badge = r.flagged
+      ? `<span class="badge badge-warn">⚠ Inconsistent</span>`
+      : `<span class="badge badge-ok">✓ OK</span>`;
+
+    tbody.insertAdjacentHTML("beforeend", `
+      <tr>
+        <td>${r.id}</td>
+        <td>${r.name}</td>
+        <td>${r.total}</td>
+        <td>${r.score}</td>
+        <td>${badge}</td>
+      </tr>
+    `);
+  });
+}
+
+// Enable sorting by clicking headers (first header row)
+document.querySelectorAll("#deptTable thead tr:first-child th").forEach(th => {
+  th.style.cursor = "pointer";
+  th.addEventListener("click", () => {
+    const col = th.dataset.col;
+    if (!col) return;
+
+    if (currentSort.column === col) {
+      currentSort.asc = !currentSort.asc;
+    } else {
+      currentSort.column = col;
+      // Default numeric columns to descending initially
+      currentSort.asc = (col === 'id' || col === 'name' || col === 'flag') ? true : false;
+    }
+
+    applyFiltersAndSorting();
+  });
+});
+
+// Live filter listeners
+document.querySelectorAll("#filterRow input, #filterRow select").forEach(el => {
+  el.addEventListener("input", applyFiltersAndSorting);
+});
+
 </script>
 
 </body>
