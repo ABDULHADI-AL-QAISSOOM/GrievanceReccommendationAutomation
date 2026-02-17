@@ -598,61 +598,68 @@
     el.addEventListener("input", applyFiltersAndSorting);
   });
 
-  // ========================= 1. DIRECT PDF DOWNLOAD (FULL REPORT) =========================
+ // ========================= 1. DIRECT PDF DOWNLOAD (FULL REPORT) =========================
 function downloadDashboardPDF() {
-    // 1. Create a container for the PDF content
-    // We force a white background and black text to fix the "washed out" look
+    // 1. Create a container that covers the screen temporarily
     const container = document.createElement('div');
-    container.style.width = "100%";
-    container.style.padding = "20px";
-    container.style.backgroundColor = "#ffffff"; 
-    container.style.color = "#000000"; 
-    container.style.fontFamily = "'Inter', sans-serif";
+    
+    // Position it explicitly so html2canvas can "see" it
+    container.style.position = 'absolute';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100%';
+    container.style.minHeight = '100vh'; // Ensure it has height
+    container.style.zIndex = '9999'; // Put it on top of everything
+    container.style.backgroundColor = '#ffffff'; // Pure white background
+    container.style.color = '#000000'; // Pure black text
+    container.style.padding = '40px';
+    container.style.boxSizing = 'border-box';
 
-    // Header
+    // Header for the PDF
     const title = document.createElement('h1');
     title.textContent = "Staff Evaluation Grievance Analysis";
     title.style.textAlign = "center";
     title.style.color = "#115f66";
     title.style.marginBottom = "30px";
+    title.style.fontFamily = "sans-serif";
     container.appendChild(title);
 
-    // Helper: Clones a section, removes buttons/filters, fixes charts
+    // Helper: Clones a section, removes buttons, fixes charts, enforces styles
     function addSection(id) {
         const original = document.getElementById(id);
         
-        // Only add if the section exists and is currently visible (display != none)
+        // Only add if the section exists and is currently visible
         if (original && original.style.display !== 'none') {
             const clone = original.cloneNode(true);
             
-            // --- FIX 1: Force colors to avoid "washed out" look ---
-            clone.style.backgroundColor = "#ffffff";
+            // --- STYLE FIXES (Crisp Black & White) ---
+            clone.style.backgroundColor = "transparent"; // Container is already white
             clone.style.color = "#000000";
-            clone.style.border = "1px solid #ddd";
+            clone.style.border = "1px solid #ccc";
             clone.style.boxShadow = "none";
-            clone.style.padding = "15px";
-            clone.style.marginBottom = "20px";
-            // Prevent section from being cut in half across pages
-            clone.style.pageBreakInside = "avoid"; 
-
-            // --- FIX 2: Remove buttons and inputs ---
+            clone.style.padding = "20px";
+            clone.style.marginBottom = "30px";
+            clone.style.borderRadius = "8px";
+            clone.style.fontFamily = "sans-serif";
+            
+            // --- CLEANUP: Remove buttons and input fields ---
             clone.querySelectorAll('button').forEach(b => b.remove());
             const filterRow = clone.querySelector('#filterRow');
             if(filterRow) filterRow.remove();
 
-            // --- FIX 3: Convert Charts to Images ---
-            // (Standard cloning deletes chart content, so we snap a picture of it)
+            // --- CANVAS FIX: Convert Charts to Images ---
             const origCanvases = original.querySelectorAll('canvas');
             const cloneCanvases = clone.querySelectorAll('canvas');
             
             origCanvases.forEach((orig, index) => {
                 if (cloneCanvases[index]) {
                     try {
+                        // Create a high-quality image from the canvas
                         const img = document.createElement('img');
-                        img.src = orig.toDataURL("image/jpeg", 1.0); // High quality
+                        img.src = orig.toDataURL("image/jpeg", 1.0);
                         img.style.width = '100%';
-                        img.style.maxWidth = '100%';
                         img.style.display = 'block';
+                        // Replace the empty canvas in the clone with the image
                         cloneCanvases[index].parentNode.replaceChild(img, cloneCanvases[index]);
                     } catch(e) { console.error("Canvas error", e); }
                 }
@@ -662,12 +669,15 @@ function downloadDashboardPDF() {
         }
     }
 
-    // Add the specific sections in order
+    // Add the specific sections
     addSection('employeeInfo');
     addSection('deptComparison');
     addSection('deptAnalysis');
     addSection('byScoreSection');
-    addSection('recommendation'); // This ensures recommendation is grabbed
+    addSection('recommendation');
+
+    // Add to body so it is visible to the generator
+    document.body.appendChild(container);
 
     // Options for html2pdf
     const opt = {
@@ -675,21 +685,20 @@ function downloadDashboardPDF() {
       filename:     'Evaluation_Report.pdf',
       image:        { type: 'jpeg', quality: 0.98 },
       html2canvas:  { 
-          scale: 2, // High resolution
+          scale: 2, 
           useCORS: true, 
-          backgroundColor: "#ffffff" // Force white background on the canvas
+          scrollY: 0, // Critical: Forces capture from the top of the overlay
+          windowWidth: document.body.scrollWidth 
       },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
 
-    // Generate and Download
-    // We append the container to body temporarily to ensure fonts render, then remove it
-    document.body.appendChild(container); 
-    container.style.position = 'absolute';
-    container.style.left = '-9999px'; // Hide it from view while generating
-
+    // Generate, Save, then Remove the container
     html2pdf().set(opt).from(container).save().then(() => {
-        document.body.removeChild(container); // Clean up
+        document.body.removeChild(container);
+    }, (err) => {
+        console.error("PDF Export Error:", err);
+        document.body.removeChild(container); // Ensure we clean up even on error
     });
 }
 
