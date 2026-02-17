@@ -3,25 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>Staff Evaluation Grievance Analysis</title>
-<button id="exportPDF" style="
-  background:#115f66;
-  color:white;
-  padding:10px 18px;
-  border-radius:8px;
-  border:none;
-  cursor:pointer;
-  margin-bottom:18px;
-  font-weight:600;
-">
-  Export Page as PDF
-</button>
-  <!-- Google Font -->
+
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" />
 
-  <!-- SheetJS -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <style>
@@ -94,7 +80,10 @@
 
 <div class="container">
 
-  <!-- Upload -->
+  <div style="text-align: right;">
+    <button id="exportPDF" style="margin-top:0;">Export Page as PDF</button>
+  </div>
+
   <div class="section">
     <h2>Upload Excel Files</h2>
     <p class="help">
@@ -114,7 +103,6 @@
     <div id="fileStatus" class="status"></div>
   </div>
 
-  <!-- Search -->
   <div class="section">
     <h2>Search Employee</h2>
     <div class="flex">
@@ -124,7 +112,6 @@
     <p class="small muted">Comparison includes employees from the <strong>same Department</strong> and the <strong>same Category</strong>.</p>
   </div>
 
-  <!-- Employee Info -->
   <div id="employeeInfo" class="section" style="display:none;">
     <h2>Employee Information</h2>
     <div class="flex">
@@ -136,46 +123,43 @@
     </div>
   </div>
 
-  <!-- Department Comparison -->
-<div id="deptComparison" class="section" style="display:none;">
+  <div id="deptComparison" class="section" style="display:none;">
     <div class="flex" style="justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <h2 style="margin:0;">Department Comparison</h2>
-        <button onclick="printDepartmentTable()" style="margin:0; background:#115f66;">Export Table</button>
+        <button onclick="printDepartmentTable()" style="margin:0; background:#115f66;">Export Table to PDF</button>
+    </div>
+    <div class="count-box">
+      Employees in this department (same category): <span id="deptCount"></span>
     </div>
 
     <table id="deptTable">
       <thead>
-        
-<!-- Sortable Header Row -->
-  <tr>
-    <th data-col="id">KFUPM ID</th>
-    <th data-col="name">Name</th>
-    <th data-col="total">Total (100)</th>
-    <th data-col="score">Overall Score</th>
-    <th data-col="flag">Flag</th>
-  </tr>
+        <tr>
+          <th data-col="id">KFUPM ID</th>
+          <th data-col="name">Name</th>
+          <th data-col="total">Total (100)</th>
+          <th data-col="score">Overall Score</th>
+          <th data-col="flag">Flag</th>
+        </tr>
 
-  <!-- Filter Row -->
-  <tr id="filterRow">
-    <th><input type="text" id="filterID" placeholder="Filter ID" class="small"></th>
-    <th><input type="text" id="filterName" placeholder="Filter Name" class="small"></th>
-    <th><input type="text" id="filterTotal" placeholder="Filter Total" class="small"></th>
-    <th><input type="text" id="filterScore" placeholder="Filter Score" class="small"></th>
-    <th>
-      <select id="filterFlag" class="small">
-        <option value="">All</option>
-        <option value="OK">OK</option>
-        <option value="Inconsistent">Inconsistent</option>
-      </select>
-    </th>
-  </tr>
-
+        <tr id="filterRow">
+          <th><input type="text" id="filterID" placeholder="Filter ID" class="small"></th>
+          <th><input type="text" id="filterName" placeholder="Filter Name" class="small"></th>
+          <th><input type="text" id="filterTotal" placeholder="Filter Total" class="small"></th>
+          <th><input type="text" id="filterScore" placeholder="Filter Score" class="small"></th>
+          <th>
+            <select id="filterFlag" class="small">
+              <option value="">All</option>
+              <option value="OK">OK</option>
+              <option value="Inconsistent">Inconsistent</option>
+            </select>
+          </th>
+        </tr>
       </thead>
       <tbody></tbody>
     </table>
   </div>
 
-  <!-- Department Analysis -->
   <div id="deptAnalysis" class="section" style="display:none;">
     <h2>Department Score Analysis</h2>
     <div class="flex small muted">
@@ -194,7 +178,6 @@
     </div>
   </div>
 
-  <!-- Total by Overall Score -->
   <div id="byScoreSection" class="section" style="display:none;">
     <h2>Total (100) by Overall Score</h2>
     <p class="small muted">These views show how Total (100) varies within each overall score group.</p>
@@ -213,7 +196,6 @@
     <div id="variationBadges" class="flex small" style="margin-top:10px;"></div>
   </div>
 
-  <!-- Recommendation -->
   <div id="recommendation" class="section" style="display:none;">
     <h2>Recommendation</h2>
     <p id="recText"></p>
@@ -350,16 +332,16 @@
     // Sort table by score desc, then total desc
     group.sort((a,b)=> b.score - a.score || b.total - a.total);
 
-  // Save table data for sorting/filtering and render via the engine
-lastDeptGroup = group.map(p => ({
-  id: p.id,
-  name: p.name,
-  total: p.total,
-  score: p.score,
-  flagged: flaggedIds.has(p.id) // boolean
-}));
+    // Save table data for sorting/filtering and render via the engine
+    lastDeptGroup = group.map(p => ({
+      id: p.id,
+      name: p.name,
+      total: p.total,
+      score: p.score,
+      flagged: flaggedIds.has(p.id) // boolean
+    }));
 
-applyFiltersAndSorting();
+    applyFiltersAndSorting();
 
     document.getElementById("deptComparison").style.display = "block";
 
@@ -393,69 +375,41 @@ applyFiltersAndSorting();
         withinDistribution = false;
       }
     }
-    // ---------------------------------------------------------------
 
-    // Recommendation: Case 1 vs Case 2
+    // Recommendation logic
     const employeeIsFlagged = flaggedIds.has(emp.id);
     const normal =
-      (avg >= 2 && avg <= 3) &&                 // department normal band
-      (Math.abs(emp.score - avg) <= 1) &&       // employee score follows dept trend
-      !employeeIsFlagged &&                     // no inconsistencies
-      withinDistribution;                       // fits same-score distribution
+      (avg >= 2 && avg <= 3) &&                // department normal band
+      (Math.abs(emp.score - avg) <= 1) &&      // employee score follows dept trend
+      !employeeIsFlagged &&                    // no inconsistencies
+      withinDistribution;                      // fits same-score distribution
 
     let rec = "";
     if (normal) {
-      // Case 1
       rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend no changes in the evaluation score.`;
     } else {
-
-    // ===== CASE 2 — Intelligent Recommendation =====
-    let reasons = [];
-
-    // 1. Peer inconsistency
-    const peersWithLowerTotalHigherScore = group.filter(p =>
-      p.total < emp.total && p.score > emp.score
-    );
-    if (peersWithLowerTotalHigherScore.length > 0) {
-      reasons.push(
-        `Several peers with lower Total (100) received higher overall scores, indicating inconsistency in evaluation application.`
-      );
-    }
-
-    // 2. Employee outside distribution
-    if (!withinDistribution) {
-      reasons.push(
-        `The employee’s Total (100) falls significantly outside the distribution of others who received the same overall score.`
-      );
-    }
-
-    // 3. High variation groups
-    const highVarGroups = [];
-    [1, 2, 3, 4, 5].forEach(s => {
-      const vals = group.filter(g => g.score === s).map(g => g.total);
-      if (vals.length > 1 && stddev(vals) >= VARIATION_STD_THRESHOLD) {
-        highVarGroups.push(s);
+      let reasons = [];
+      const peersWithLowerTotalHigherScore = group.filter(p => p.total < emp.total && p.score > emp.score);
+      if (peersWithLowerTotalHigherScore.length > 0) {
+        reasons.push(`Several peers with lower Total (100) received higher overall scores, indicating inconsistency in evaluation application.`);
       }
-    });
-    if (highVarGroups.length > 0) {
-      reasons.push(
-        `Significant variation was observed within score groups ${highVarGroups.join(", ")}, suggesting inconsistent scoring practices.`
-      );
+      if (!withinDistribution) {
+        reasons.push(`The employee’s Total (100) falls significantly outside the distribution of others who received the same overall score.`);
+      }
+      const highVarGroups = [];
+      [1, 2, 3, 4, 5].forEach(s => {
+        const vals = group.filter(g => g.score === s).map(g => g.total);
+        if (vals.length > 1 && stddev(vals) >= VARIATION_STD_THRESHOLD) {
+          highVarGroups.push(s);
+        }
+      });
+      if (highVarGroups.length > 0) {
+        reasons.push(`Significant variation was observed within score groups ${highVarGroups.join(", ")}, suggesting inconsistent scoring practices.`);
+      }
+      reasons.push(`The department’s average rating of ${avg.toFixed(2)} further indicates irregular scoring patterns.`);
+      reasons.push(`Accordingly, the APS Team recommends reconsideration of the assigned evaluation score.`);
+      rec = reasons.join(" ");
     }
-
-    // 4. Department average
-    reasons.push(
-      `The department’s average rating of ${avg.toFixed(2)} further indicates irregular scoring patterns.`
-    );
-
-    // 5. Final recommendation
-    reasons.push(
-      `Accordingly, the APS Team recommends reconsideration of the assigned evaluation score.`
-    );
-
-    rec = reasons.join(" ");
-}
-     
     
     document.getElementById("recText").textContent = rec;
     document.getElementById("recommendation").style.display = "block";
@@ -472,13 +426,7 @@ applyFiltersAndSorting();
         datasets: [{
           label: "Count",
           data: [dist[1], dist[2], dist[3], dist[4], dist[5]],
-          backgroundColor: [
-            COLORS.cat1,      // 1
-            COLORS.cat2,      // 2
-            COLORS.cat3,      // 3
-            COLORS.cat4,      // 4
-            COLORS.cat5       // 5
-          ],
+          backgroundColor: [COLORS.cat1, COLORS.cat2, COLORS.cat3, COLORS.cat4, COLORS.cat5],
           borderRadius: 6
         }]
       },
@@ -516,24 +464,19 @@ applyFiltersAndSorting();
     });
   }
 
-  // Per-score distributions (1..5)
   function drawTotalByScoreCharts(group, bins){
-    // Show section
     document.getElementById("byScoreSection").style.display = "block";
-
-    // Build per-score arrays of totals
     const totalsByScore = {1:[],2:[],3:[],4:[],5:[]};
     group.forEach(g => {
       const s = Number(g.score);
       if (totalsByScore[s]) totalsByScore[s].push(g.total);
     });
 
-    // Grouped histogram (datasets per score 1..5)
     const datasets = [1,2,3,4,5].map(s => {
       const color = [COLORS.cat1, COLORS.cat2, COLORS.cat3, COLORS.cat4, COLORS.cat5][s-1];
       return {
         label: `Score ${s}`,
-        backgroundColor: color + "cc", // slight transparency
+        backgroundColor: color + "cc",
         borderColor: color,
         data: binCounts(totalsByScore[s], bins)
       };
@@ -542,10 +485,7 @@ applyFiltersAndSorting();
     if(totalByScoreChartObj) totalByScoreChartObj.destroy();
     totalByScoreChartObj = new Chart(document.getElementById("totalByScoreChart"), {
       type: "bar",
-      data: {
-        labels: bins.map(b=>`${b[0]}–${b[1]}`),
-        datasets
-      },
+      data: { labels: bins.map(b=>`${b[0]}–${b[1]}`), datasets },
       options: {
         responsive:true,
         plugins:{ legend:{ position:"top" } },
@@ -556,13 +496,9 @@ applyFiltersAndSorting();
       }
     });
 
-    // Scatter (jitter) plot: x = score (1..5), y = total
     const scatterDatasets = [1,2,3,4,5].map(s => {
       const color = [COLORS.cat1, COLORS.cat2, COLORS.cat3, COLORS.cat4, COLORS.cat5][s-1];
-      const points = totalsByScore[s].map(v => ({
-        x: s + (Math.random()-0.5)*0.2, // jitter ±0.1
-        y: v
-      }));
+      const points = totalsByScore[s].map(v => ({ x: s + (Math.random()-0.5)*0.2, y: v }));
       return {
         label: `Score ${s}`,
         data: points,
@@ -580,26 +516,12 @@ applyFiltersAndSorting();
       options: {
         plugins:{ legend:{ position:"top" } },
         scales: {
-          x: {
-            type: "linear",
-            min: 0.5, max: 5.5,
-            ticks: {
-              stepSize: 1,
-              callback: (v)=> [1,2,3,4,5].includes(v) ? v : ""
-            },
-            title: { display:true, text:"Overall Score" },
-            grid:{ display:false }
-          },
-          y: {
-            min: 0, max: 100,
-            title: { display:true, text:"Total (100)" },
-            beginAtZero: true
-          }
+          x: { type: "linear", min: 0.5, max: 5.5, ticks: { stepSize: 1, callback: (v)=> [1,2,3,4,5].includes(v) ? v : "" }, title: { display:true, text:"Overall Score" }, grid:{ display:false } },
+          y: { min: 0, max: 100, title: { display:true, text:"Total (100)" }, beginAtZero: true }
         }
       }
     });
 
-    // Variation badges (std dev per score group for 1..5)
     const vb = document.getElementById("variationBadges");
     vb.innerHTML = "";
     [1,2,3,4,5].forEach(s=>{
@@ -608,185 +530,93 @@ applyFiltersAndSorting();
       const sd = stddev(vals);
       const cl = sd >= VARIATION_STD_THRESHOLD ? "badge-warn" : "badge-ok";
       const label = sd >= VARIATION_STD_THRESHOLD ? "High variation" : "Low variation";
-      vb.insertAdjacentHTML("beforeend",
-        `<span class="badge ${cl}" title="Std Dev = ${sd.toFixed(1)} for score ${s}">
-           Score ${s}: ${label} (σ=${sd.toFixed(1)})
-         </span>`
+      vb.insertAdjacentHTML("beforeend", `<span class="badge ${cl}" title="Std Dev = ${sd.toFixed(1)} for score ${s}">Score ${s}: ${label} (σ=${sd.toFixed(1)})</span>`);
+    });
+  }
+
+  // ============================ SORTING & FILTERING ENGINE ============================
+  let currentSort = { column: 'score', asc: false };
+  let lastDeptGroup = [];
+  const COL_MAP = { id: 'id', name: 'name', total: 'total', score: 'score', flag: 'flagged' };
+
+  function applyFiltersAndSorting() {
+    const tbody = document.querySelector("#deptTable tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    const fID = (document.getElementById("filterID")?.value || "").toLowerCase();
+    const fName = (document.getElementById("filterName")?.value || "").toLowerCase();
+    const fTotal = (document.getElementById("filterTotal")?.value || "").trim();
+    const fScore = (document.getElementById("filterScore")?.value || "").trim();
+    const fFlag = (document.getElementById("filterFlag")?.value || "").trim();
+
+    let rows = lastDeptGroup.filter(r => {
+      const flagText = r.flagged ? "Inconsistent" : "OK";
+      return (
+        (fID === "" || String(r.id).toLowerCase().includes(fID)) &&
+        (fName === "" || String(r.name).toLowerCase().includes(fName)) &&
+        (fTotal === "" || String(r.total).includes(fTotal)) &&
+        (fScore === "" || String(r.score).includes(fScore)) &&
+        (fFlag === "" || flagText === fFlag)
       );
     });
-  }
 
-/* ============================ SORTING & FILTERING ENGINE ============================ */
+    if (currentSort.column) {
+      const key = COL_MAP[currentSort.column] || currentSort.column;
+      rows.sort((a, b) => {
+        let v1 = a[key];
+        let v2 = b[key];
+        if (key === 'id' || key === 'name') { v1 = String(v1).toLowerCase(); v2 = String(v2).toLowerCase(); }
+        else if (key === 'total' || key === 'score') { v1 = Number(v1); v2 = Number(v2); }
+        else if (key === 'flagged') { v1 = !!v1; v2 = !!v2; }
+        if (v1 < v2) return currentSort.asc ? -1 : 1;
+        if (v1 > v2) return currentSort.asc ?  1 : -1;
+        return 0;
+      });
+    }
 
-// Default sort to match your previous behavior: Score (desc)
-let currentSort = { column: 'score', asc: false };
-
-// Will hold current department rows (set inside searchEmployee)
-let lastDeptGroup = [];
-
-// Map table header 'data-col' → object key
-const COL_MAP = { id: 'id', name: 'name', total: 'total', score: 'score', flag: 'flagged' };
-
-// Main re-render function (applies filters, sort, and renders)
-function applyFiltersAndSorting() {
-  const tbody = document.querySelector("#deptTable tbody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-
-  // Read filters
-  const fID = (document.getElementById("filterID")?.value || "").toLowerCase();
-  const fName = (document.getElementById("filterName")?.value || "").toLowerCase();
-  const fTotal = (document.getElementById("filterTotal")?.value || "").trim();
-  const fScore = (document.getElementById("filterScore")?.value || "").trim();
-  const fFlag = (document.getElementById("filterFlag")?.value || "").trim();
-
-  // Filter dataset
-  let rows = lastDeptGroup.filter(r => {
-    const flagText = r.flagged ? "Inconsistent" : "OK";
-    return (
-      (fID === "" || String(r.id).toLowerCase().includes(fID)) &&
-      (fName === "" || String(r.name).toLowerCase().includes(fName)) &&
-      (fTotal === "" || String(r.total).includes(fTotal)) &&
-      (fScore === "" || String(r.score).includes(fScore)) &&
-      (fFlag === "" || flagText === fFlag)
-    );
-  });
-
-  // Sorting
-  if (currentSort.column) {
-    const key = COL_MAP[currentSort.column] || currentSort.column;
-
-    rows.sort((a, b) => {
-      let v1 = a[key];
-      let v2 = b[key];
-
-      // Normalize types for proper comparison
-      if (key === 'id' || key === 'name') {
-        v1 = String(v1).toLowerCase();
-        v2 = String(v2).toLowerCase();
-      } else if (key === 'total' || key === 'score') {
-        v1 = Number(v1);
-        v2 = Number(v2);
-      } else if (key === 'flagged') {
-        // false < true → OK before Inconsistent
-        v1 = !!v1;
-        v2 = !!v2;
-      }
-
-      if (v1 < v2) return currentSort.asc ? -1 : 1;
-      if (v1 > v2) return currentSort.asc ?  1 : -1;
-      return 0;
+    rows.forEach(r => {
+      const badge = r.flagged ? `<span class="badge badge-warn">⚠ Inconsistent</span>` : `<span class="badge badge-ok">✓ OK</span>`;
+      tbody.insertAdjacentHTML("beforeend", `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.total}</td><td>${r.score}</td><td>${badge}</td></tr>`);
     });
   }
 
-  // Render rows
-  rows.forEach(r => {
-    const badge = r.flagged
-      ? `<span class="badge badge-warn">⚠ Inconsistent</span>`
-      : `<span class="badge badge-ok">✓ OK</span>`;
-
-    tbody.insertAdjacentHTML("beforeend", `
-      <tr>
-        <td>${r.id}</td>
-        <td>${r.name}</td>
-        <td>${r.total}</td>
-        <td>${r.score}</td>
-        <td>${badge}</td>
-      </tr>
-    `);
+  document.querySelectorAll("#deptTable thead tr:first-child th").forEach(th => {
+    th.style.cursor = "pointer";
+    th.addEventListener("click", () => {
+      const col = th.dataset.col;
+      if (!col) return;
+      if (currentSort.column === col) { currentSort.asc = !currentSort.asc; }
+      else { currentSort.column = col; currentSort.asc = (col === 'id' || col === 'name' || col === 'flag') ? true : false; }
+      applyFiltersAndSorting();
+    });
   });
-}
 
-// Enable sorting by clicking headers (first header row)
-document.querySelectorAll("#deptTable thead tr:first-child th").forEach(th => {
-  th.style.cursor = "pointer";
-  th.addEventListener("click", () => {
-    const col = th.dataset.col;
-    if (!col) return;
-
-    if (currentSort.column === col) {
-      currentSort.asc = !currentSort.asc;
-    } else {
-      currentSort.column = col;
-      // Default numeric columns to descending initially
-      currentSort.asc = (col === 'id' || col === 'name' || col === 'flag') ? true : false;
-    }
-
-    applyFiltersAndSorting();
+  document.querySelectorAll("#filterRow input, #filterRow select").forEach(el => {
+    el.addEventListener("input", applyFiltersAndSorting);
   });
-});
 
-// Live filter listeners
-document.querySelectorAll("#filterRow input, #filterRow select").forEach(el => {
-  el.addEventListener("input", applyFiltersAndSorting);
-});
-/* ========================= PAGE PDF EXPORT ========================= */
-
-function exportPageToPDF() {
+  // ========================= PAGE PDF EXPORT =========================
+  function exportPageToPDF() {
     const originalTitle = document.title;
     document.title = "Staff Evaluation Report";
-
     const printWindow = window.open('', '_blank');
-
     printWindow.document.open();
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Export</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              zoom: 80%; /* Adjust scale as needed */
-            }
-            table {
-              border-collapse: collapse;
-              width: 100%;
-            }
-            th, td {
-              border: 1px solid #ccc;
-              padding: 6px;
-            }
-          </style>
-        </head>
-        <body>
-          ${document.body.innerHTML}
-        </body>
-      </html>
-    `);
-
+    printWindow.document.write(`<html><head><title>Export</title><style>body { font-family: Arial, sans-serif; zoom: 80%; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #ccc; padding: 6px; }</style></head><body>${document.body.innerHTML}</body></html>`);
     printWindow.document.close();
+    printWindow.onload = function () { printWindow.focus(); printWindow.print(); printWindow.close(); document.title = originalTitle; };
+  }
+  document.getElementById("exportPDF").addEventListener("click", exportPageToPDF);
 
-    // Wait for content to load before printing
-    printWindow.onload = function () {
-        printWindow.focus();
-        printWindow.print();
-        printWindow.close();
-        document.title = originalTitle;
-    };
-}
-
-document.getElementById("exportPDF").addEventListener("click", exportPageToPDF);
-
-// ========================= TABLE PDF EXPORT ========================= 
-
-function printDepartmentTable() {
-    // 1. Clone the table to manipulate it off-screen
+  // ========================= TABLE PDF EXPORT ========================= 
+  function printDepartmentTable() {
     const originalTable = document.getElementById("deptTable");
     const tableClone = originalTable.cloneNode(true);
-
-    // 2. Remove the "Filter Row" (input boxes) from the clone
-    // This ensures the PDF is clean and doesn't show empty text boxes
     const filterRow = tableClone.querySelector("#filterRow");
-    if (filterRow) {
-        filterRow.remove();
-    }
+    if (filterRow) filterRow.remove();
 
-    // 3. Open a new window for printing
     const printWindow = window.open('', '', 'height=800,width=900');
-
-    // 4. Write the HTML structure with specific CSS for the PDF
-    printWindow.document.write('<html><head><title>Department Scores Report</title>');
-    printWindow.document.write('<style>');
+    printWindow.document.write('<html><head><title>Department Scores Report</title><style>');
     printWindow.document.write(`
         body { font-family: 'Inter', sans-serif; padding: 40px; color: #1f2937; }
         h1 { text-align: center; color: #115f66; margin-bottom: 30px; font-size: 24px; }
@@ -794,30 +624,19 @@ function printDepartmentTable() {
         th { background-color: #115f66; color: white; padding: 12px 8px; text-align: left; border: 1px solid #115f66; }
         td { padding: 10px 8px; border: 1px solid #e5e7eb; }
         tr:nth-child(even) { background-color: #f9fafb; }
-        /* Style the badges (OK/Inconsistent) inside the PDF */
         .badge { padding: 4px 8px; border-radius: 99px; font-weight: bold; font-size: 11px; display: inline-block; }
         .badge-ok { background:#e8f5e9; color:#1b5e20; border:1px solid #a5d6a7; }
         .badge-warn { background:#fff3cd; color:#7a5a00; border:1px solid #ffe69c; }
     `);
     printWindow.document.write('</style></head><body>');
-
-    // 5. Add the Custom Heading and the Clean Table
     printWindow.document.write('<h1>Overall Department\'s Scores</h1>');
     printWindow.document.write(tableClone.outerHTML);
-    
     printWindow.document.write('</body></html>');
     printWindow.document.close();
 
-    // 6. Trigger the print dialog (User selects "Save as PDF")
     printWindow.focus();
-    // Small timeout to ensure styles are loaded before print dialog opens
-    setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-    }, 250);
-}
-
-  
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+  }
 </script>
 
 </body>
