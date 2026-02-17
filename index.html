@@ -9,8 +9,6 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     :root{
@@ -83,7 +81,7 @@
 <div class="container">
 
   <div style="text-align: right;">
-    <button id="exportDashboardBtn" onclick="downloadDashboardPDF()" style="margin-top:0;">Download Report as PDF</button>
+    <button id="exportDashboardBtn" onclick="printFullReport()" style="margin-top:0;">Print / Save Report PDF</button>
   </div>
 
   <div class="section">
@@ -598,129 +596,88 @@
     el.addEventListener("input", applyFiltersAndSorting);
   });
 
-  // ========================= 1. DIRECT PDF DOWNLOAD (ROBUST) =========================
-  function downloadDashboardPDF() {
+  // ========================= 1. PRINT FULL REPORT (POP-OUT) =========================
+  function printFullReport() {
     // Safety check: Don't print if no data exists
     if(document.getElementById('deptComparison').style.display === 'none'){
         alert("Please search for an employee first to generate a report.");
         return;
     }
 
-    // 1. Create a "Print Container" that covers the existing page
-    const container = document.createElement('div');
-    container.id = "pdf-export-container";
+    // Open a new window
+    const printWindow = window.open('', '', 'height=900,width=1000');
     
-    // Style it to look exactly like a clean document
-    // We use absolute positioning to let it expand as long as needed
-    Object.assign(container.style, {
-        position: 'absolute',
-        top: '0',
-        left: '0',
-        width: '100%',
-        zIndex: '10000',
-        backgroundColor: '#ffffff', // Solid white
-        color: '#000000',           // Solid black
-        padding: '40px',
-        fontFamily: "'Inter', sans-serif"
-    });
+    // Begin writing HTML
+    printWindow.document.write('<html><head><title>Staff Evaluation Grievance Analysis</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write(`
+        body { font-family: 'Inter', sans-serif; padding: 40px; color: #000; background: #fff; }
+        h1 { text-align: center; color: #115f66; margin-bottom: 30px; }
+        .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 8px; page-break-inside: avoid; }
+        h2 { color: #115f66; margin-top: 0; }
+        /* Clean Tables */
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        th { background-color: #115f66; color: white; padding: 8px; text-align: left; }
+        td { padding: 8px; border: 1px solid #ddd; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        /* Badges */
+        .badge { padding: 4px 8px; border-radius: 99px; font-weight: bold; font-size: 11px; display: inline-block; border: 1px solid #ccc; }
+        .pill { display: inline-block; padding: 5px 10px; border: 1px solid #ccc; border-radius: 20px; margin-right: 10px; background: #f5f5f5; }
+        .flex { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        /* Chart Images */
+        img { max-width: 100%; display: block; margin: 0 auto; }
+    `);
+    printWindow.document.write('</style></head><body>');
 
-    // 2. Add the Title
-    const title = document.createElement('h1');
-    title.textContent = "Staff Evaluation Grievance Analysis";
-    Object.assign(title.style, {
-        textAlign: 'center',
-        color: '#115f66',
-        marginBottom: '30px'
-    });
-    container.appendChild(title);
+    printWindow.document.write('<h1>Staff Evaluation Grievance Analysis</h1>');
 
-    // 3. Helper: Clone sections and turn charts into static images
-    function addSection(id) {
+    // Helper to clone and process visible sections
+    function addSectionToPrint(id) {
         const original = document.getElementById(id);
         if (original && original.style.display !== 'none') {
             const clone = original.cloneNode(true);
-            
-            // Clean up the clone styles
-            Object.assign(clone.style, {
-                backgroundColor: '#ffffff',
-                color: '#000000',
-                border: '1px solid #ccc',
-                boxShadow: 'none',
-                padding: '20px',
-                marginBottom: '20px',
-                pageBreakInside: 'avoid' // Try to keep sections on one page
-            });
 
-            // Remove buttons and inputs
+            // Remove interactive elements
             clone.querySelectorAll('button').forEach(b => b.remove());
             const filterRow = clone.querySelector('#filterRow');
             if(filterRow) filterRow.remove();
 
-            // --- CRITICAL: Convert Canvas Charts to Images ---
-            // Charts will be blank if we don't do this
+            // CONVERT CANVAS TO IMAGES (Crucial for printing charts)
             const origCanvases = original.querySelectorAll('canvas');
             const cloneCanvases = clone.querySelectorAll('canvas');
-
-            origCanvases.forEach((origCtx, i) => {
+            origCanvases.forEach((orig, i) => {
                 if (cloneCanvases[i]) {
-                    // Create an image element
                     const img = document.createElement('img');
-                    // Snapshot the current chart
-                    // We set quality to 1.0 (max)
-                    img.src = origCtx.toDataURL('image/jpeg', 1.0); 
-                    img.style.width = '100%';
-                    img.style.display = 'block';
-                    
-                    // Swap the empty canvas in the clone with the new image
+                    img.src = orig.toDataURL('image/jpeg', 1.0);
                     cloneCanvases[i].parentNode.replaceChild(img, cloneCanvases[i]);
                 }
             });
 
-            container.appendChild(clone);
+            printWindow.document.write('<div class="section">');
+            printWindow.document.write(clone.innerHTML);
+            printWindow.document.write('</div>');
         }
     }
 
-    // 4. Add the sections you want
-    addSection('employeeInfo');
-    addSection('deptComparison');
-    addSection('deptAnalysis');
-    addSection('byScoreSection');
-    addSection('recommendation');
+    // Add sections in order
+    addSectionToPrint('employeeInfo');
+    addSectionToPrint('deptComparison');
+    addSectionToPrint('deptAnalysis');
+    addSectionToPrint('byScoreSection');
+    addSectionToPrint('recommendation');
 
-    // 5. Append to body so the browser renders it
-    document.body.appendChild(container);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
 
-    // 6. Generate the PDF
-    // We use a small Timeout to ensure the images are painted on screen 
-    // before the PDF generator takes the snapshot.
+    // Trigger Print
+    printWindow.focus();
     setTimeout(() => {
-        const opt = {
-            margin:       0.5,
-            filename:     'Evaluation_Report.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { 
-                scale: 2,           // High resolution
-                useCORS: true,      // Allow loading images
-                scrollY: 0,         // Start from top
-                backgroundColor: '#ffffff' // Ensure white background
-            },
-            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
-
-        html2pdf()
-            .set(opt)
-            .from(container)
-            .save()
-            .then(() => {
-                // Remove the container after saving
-                document.body.removeChild(container);
-            })
-            .catch(err => {
-                console.error("PDF Error:", err);
-                document.body.removeChild(container);
-            });
-    }, 1500); // 1.5 seconds delay to prevent blank pages
+        printWindow.print();
+        printWindow.close();
+    }, 250); // Fast delay
   }
+
 
   // ========================= 2. TABLE PDF EXPORT (PRINT STYLE) ========================= 
   function printDepartmentTable() {
