@@ -600,6 +600,12 @@
 
   // ========================= 1. DIRECT PDF DOWNLOAD (ROBUST) =========================
   function downloadDashboardPDF() {
+    // Safety check: Don't print if no data exists
+    if(document.getElementById('deptComparison').style.display === 'none'){
+        alert("Please search for an employee first to generate a report.");
+        return;
+    }
+
     // 1. Create a "Print Container" that covers the existing page
     const container = document.createElement('div');
     container.id = "pdf-export-container";
@@ -713,7 +719,7 @@
                 console.error("PDF Error:", err);
                 document.body.removeChild(container);
             });
-    }, 500); // 500ms delay to prevent blank pages
+    }, 1500); // 1.5 seconds delay to prevent blank pages
   }
 
   // ========================= 2. TABLE PDF EXPORT (PRINT STYLE) ========================= 
