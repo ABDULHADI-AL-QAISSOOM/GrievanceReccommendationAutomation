@@ -536,132 +536,75 @@
     });
   }
 
-  // ============================ SORTING & FILTERING ENGINE ============================
-  let currentSort = { column: 'score', asc: false };
-  let lastDeptGroup = [];
-  const COL_MAP = { id: 'id', name: 'name', total: 'total', score: 'score', flag: 'flagged' };
-
-  function applyFiltersAndSorting() {
-    const tbody = document.querySelector("#deptTable tbody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
-
-    const fID = (document.getElementById("filterID")?.value || "").toLowerCase();
-    const fName = (document.getElementById("filterName")?.value || "").toLowerCase();
-    const fTotal = (document.getElementById("filterTotal")?.value || "").trim();
-    const fScore = (document.getElementById("filterScore")?.value || "").trim();
-    const fFlag = (document.getElementById("filterFlag")?.value || "").trim();
-
-    let rows = lastDeptGroup.filter(r => {
-      const flagText = r.flagged ? "Inconsistent" : "OK";
-      return (
-        (fID === "" || String(r.id).toLowerCase().includes(fID)) &&
-        (fName === "" || String(r.name).toLowerCase().includes(fName)) &&
-        (fTotal === "" || String(r.total).includes(fTotal)) &&
-        (fScore === "" || String(r.score).includes(fScore)) &&
-        (fFlag === "" || flagText === fFlag)
-      );
-    });
-
-    if (currentSort.column) {
-      const key = COL_MAP[currentSort.column] || currentSort.column;
-      rows.sort((a, b) => {
-        let v1 = a[key];
-        let v2 = b[key];
-        if (key === 'id' || key === 'name') { v1 = String(v1).toLowerCase(); v2 = String(v2).toLowerCase(); }
-        else if (key === 'total' || key === 'score') { v1 = Number(v1); v2 = Number(v2); }
-        else if (key === 'flagged') { v1 = !!v1; v2 = !!v2; }
-        if (v1 < v2) return currentSort.asc ? -1 : 1;
-        if (v1 > v2) return currentSort.asc ?  1 : -1;
-        return 0;
-      });
-    }
-
-    rows.forEach(r => {
-      const badge = r.flagged ? `<span class="badge badge-warn">⚠ Inconsistent</span>` : `<span class="badge badge-ok">✓ OK</span>`;
-      tbody.insertAdjacentHTML("beforeend", `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.total}</td><td>${r.score}</td><td>${badge}</td></tr>`);
-    });
-  }
-
-  document.querySelectorAll("#deptTable thead tr:first-child th").forEach(th => {
-    th.style.cursor = "pointer";
-    th.addEventListener("click", () => {
-      const col = th.dataset.col;
-      if (!col) return;
-      if (currentSort.column === col) { currentSort.asc = !currentSort.asc; }
-      else { currentSort.column = col; currentSort.asc = (col === 'id' || col === 'name' || col === 'flag') ? true : false; }
-      applyFiltersAndSorting();
-    });
-  });
-
-  document.querySelectorAll("#filterRow input, #filterRow select").forEach(el => {
-    el.addEventListener("input", applyFiltersAndSorting);
-  });
-
- // ========================= 1. DIRECT PDF DOWNLOAD (FULL REPORT) =========================
+// ========================= 1. DIRECT PDF DOWNLOAD (ROBUST) =========================
 function downloadDashboardPDF() {
-    // 1. Create a container that covers the screen temporarily
+    // 1. Create a "Print Container" that covers the existing page
     const container = document.createElement('div');
+    container.id = "pdf-export-container";
     
-    // Position it explicitly so html2canvas can "see" it
-    container.style.position = 'absolute';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.width = '100%';
-    container.style.minHeight = '100vh'; // Ensure it has height
-    container.style.zIndex = '9999'; // Put it on top of everything
-    container.style.backgroundColor = '#ffffff'; // Pure white background
-    container.style.color = '#000000'; // Pure black text
-    container.style.padding = '40px';
-    container.style.boxSizing = 'border-box';
+    // Style it to look exactly like a clean document
+    // We use absolute positioning to let it expand as long as needed
+    Object.assign(container.style, {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '100%',
+        zIndex: '10000',
+        backgroundColor: '#ffffff', // Solid white
+        color: '#000000',           // Solid black
+        padding: '40px',
+        fontFamily: "'Inter', sans-serif"
+    });
 
-    // Header for the PDF
+    // 2. Add the Title
     const title = document.createElement('h1');
     title.textContent = "Staff Evaluation Grievance Analysis";
-    title.style.textAlign = "center";
-    title.style.color = "#115f66";
-    title.style.marginBottom = "30px";
-    title.style.fontFamily = "sans-serif";
+    Object.assign(title.style, {
+        textAlign: 'center',
+        color: '#115f66',
+        marginBottom: '30px'
+    });
     container.appendChild(title);
 
-    // Helper: Clones a section, removes buttons, fixes charts, enforces styles
+    // 3. Helper: Clone sections and turn charts into static images
     function addSection(id) {
         const original = document.getElementById(id);
-        
-        // Only add if the section exists and is currently visible
         if (original && original.style.display !== 'none') {
             const clone = original.cloneNode(true);
             
-            // --- STYLE FIXES (Crisp Black & White) ---
-            clone.style.backgroundColor = "transparent"; // Container is already white
-            clone.style.color = "#000000";
-            clone.style.border = "1px solid #ccc";
-            clone.style.boxShadow = "none";
-            clone.style.padding = "20px";
-            clone.style.marginBottom = "30px";
-            clone.style.borderRadius = "8px";
-            clone.style.fontFamily = "sans-serif";
-            
-            // --- CLEANUP: Remove buttons and input fields ---
+            // Clean up the clone styles
+            Object.assign(clone.style, {
+                backgroundColor: '#ffffff',
+                color: '#000000',
+                border: '1px solid #ccc',
+                boxShadow: 'none',
+                padding: '20px',
+                marginBottom: '20px',
+                pageBreakInside: 'avoid' // Try to keep sections on one page
+            });
+
+            // Remove buttons and inputs
             clone.querySelectorAll('button').forEach(b => b.remove());
             const filterRow = clone.querySelector('#filterRow');
             if(filterRow) filterRow.remove();
 
-            // --- CANVAS FIX: Convert Charts to Images ---
+            // --- CRITICAL: Convert Canvas Charts to Images ---
+            // Charts will be blank if we don't do this
             const origCanvases = original.querySelectorAll('canvas');
             const cloneCanvases = clone.querySelectorAll('canvas');
-            
-            origCanvases.forEach((orig, index) => {
-                if (cloneCanvases[index]) {
-                    try {
-                        // Create a high-quality image from the canvas
-                        const img = document.createElement('img');
-                        img.src = orig.toDataURL("image/jpeg", 1.0);
-                        img.style.width = '100%';
-                        img.style.display = 'block';
-                        // Replace the empty canvas in the clone with the image
-                        cloneCanvases[index].parentNode.replaceChild(img, cloneCanvases[index]);
-                    } catch(e) { console.error("Canvas error", e); }
+
+            origCanvases.forEach((origCtx, i) => {
+                if (cloneCanvases[i]) {
+                    // Create an image element
+                    const img = document.createElement('img');
+                    // Snapshot the current chart
+                    // We set quality to 1.0 (max)
+                    img.src = origCtx.toDataURL('image/jpeg', 1.0); 
+                    img.style.width = '100%';
+                    img.style.display = 'block';
+                    
+                    // Swap the empty canvas in the clone with the new image
+                    cloneCanvases[i].parentNode.replaceChild(img, cloneCanvases[i]);
                 }
             });
 
@@ -669,37 +612,46 @@ function downloadDashboardPDF() {
         }
     }
 
-    // Add the specific sections
+    // 4. Add the sections you want
     addSection('employeeInfo');
     addSection('deptComparison');
     addSection('deptAnalysis');
     addSection('byScoreSection');
     addSection('recommendation');
 
-    // Add to body so it is visible to the generator
+    // 5. Append to body so the browser renders it
     document.body.appendChild(container);
 
-    // Options for html2pdf
-    const opt = {
-      margin:       0.4,
-      filename:     'Evaluation_Report.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { 
-          scale: 2, 
-          useCORS: true, 
-          scrollY: 0, // Critical: Forces capture from the top of the overlay
-          windowWidth: document.body.scrollWidth 
-      },
-      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-    };
+    // 6. Generate the PDF
+    // We use a small Timeout to ensure the images are painted on screen 
+    // before the PDF generator takes the snapshot.
+    setTimeout(() => {
+        const opt = {
+            margin:       0.5,
+            filename:     'Evaluation_Report.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { 
+                scale: 2,           // High resolution
+                useCORS: true,      // Allow loading images
+                scrollY: 0,         // Start from top
+                backgroundColor: '#ffffff' // Ensure white background
+            },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
 
-    // Generate, Save, then Remove the container
-    html2pdf().set(opt).from(container).save().then(() => {
-        document.body.removeChild(container);
-    }, (err) => {
-        console.error("PDF Export Error:", err);
-        document.body.removeChild(container); // Ensure we clean up even on error
-    });
+        html2pdf()
+            .set(opt)
+            .from(container)
+            .save()
+            .then(() => {
+                // Remove the container after saving
+                document.body.removeChild(container);
+            })
+            .catch(err => {
+                console.error("PDF Error:", err);
+                document.body.removeChild(container);
+            });
+    }, 500); // 500ms delay to prevent blank pages
 }
 
   // ========================= 2. TABLE PDF EXPORT (PRINT STYLE) ========================= 
