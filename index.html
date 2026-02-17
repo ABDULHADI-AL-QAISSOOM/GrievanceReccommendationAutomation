@@ -536,8 +536,70 @@
     });
   }
 
-// ========================= 1. DIRECT PDF DOWNLOAD (ROBUST) =========================
-function downloadDashboardPDF() {
+  // ============================ SORTING & FILTERING ENGINE ============================
+  let currentSort = { column: 'score', asc: false };
+  let lastDeptGroup = [];
+  const COL_MAP = { id: 'id', name: 'name', total: 'total', score: 'score', flag: 'flagged' };
+
+  function applyFiltersAndSorting() {
+    const tbody = document.querySelector("#deptTable tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    const fID = (document.getElementById("filterID")?.value || "").toLowerCase();
+    const fName = (document.getElementById("filterName")?.value || "").toLowerCase();
+    const fTotal = (document.getElementById("filterTotal")?.value || "").trim();
+    const fScore = (document.getElementById("filterScore")?.value || "").trim();
+    const fFlag = (document.getElementById("filterFlag")?.value || "").trim();
+
+    let rows = lastDeptGroup.filter(r => {
+      const flagText = r.flagged ? "Inconsistent" : "OK";
+      return (
+        (fID === "" || String(r.id).toLowerCase().includes(fID)) &&
+        (fName === "" || String(r.name).toLowerCase().includes(fName)) &&
+        (fTotal === "" || String(r.total).includes(fTotal)) &&
+        (fScore === "" || String(r.score).includes(fScore)) &&
+        (fFlag === "" || flagText === fFlag)
+      );
+    });
+
+    if (currentSort.column) {
+      const key = COL_MAP[currentSort.column] || currentSort.column;
+      rows.sort((a, b) => {
+        let v1 = a[key];
+        let v2 = b[key];
+        if (key === 'id' || key === 'name') { v1 = String(v1).toLowerCase(); v2 = String(v2).toLowerCase(); }
+        else if (key === 'total' || key === 'score') { v1 = Number(v1); v2 = Number(v2); }
+        else if (key === 'flagged') { v1 = !!v1; v2 = !!v2; }
+        if (v1 < v2) return currentSort.asc ? -1 : 1;
+        if (v1 > v2) return currentSort.asc ?  1 : -1;
+        return 0;
+      });
+    }
+
+    rows.forEach(r => {
+      const badge = r.flagged ? `<span class="badge badge-warn">⚠ Inconsistent</span>` : `<span class="badge badge-ok">✓ OK</span>`;
+      tbody.insertAdjacentHTML("beforeend", `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.total}</td><td>${r.score}</td><td>${badge}</td></tr>`);
+    });
+  }
+
+  document.querySelectorAll("#deptTable thead tr:first-child th").forEach(th => {
+    th.style.cursor = "pointer";
+    th.addEventListener("click", () => {
+      const col = th.dataset.col;
+      if (!col) return;
+      if (currentSort.column === col) { currentSort.asc = !currentSort.asc; }
+      else { currentSort.column = col; currentSort.asc = (col === 'id' || col === 'name' || col === 'flag') ? true : false; }
+      applyFiltersAndSorting();
+    });
+  });
+
+  document.querySelectorAll("#filterRow input, #filterRow select").forEach(el => {
+    el.addEventListener("input", applyFiltersAndSorting);
+  });
+
+  // ========================= 1. DIRECT PDF DOWNLOAD (ROBUST) =========================
+  function downloadDashboardPDF() {
     // 1. Create a "Print Container" that covers the existing page
     const container = document.createElement('div');
     container.id = "pdf-export-container";
@@ -652,7 +714,7 @@ function downloadDashboardPDF() {
                 document.body.removeChild(container);
             });
     }, 500); // 500ms delay to prevent blank pages
-}
+  }
 
   // ========================= 2. TABLE PDF EXPORT (PRINT STYLE) ========================= 
   function printDepartmentTable() {
