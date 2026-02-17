@@ -137,10 +137,10 @@
   </div>
 
   <!-- Department Comparison -->
-  <div id="deptComparison" class="section" style="display:none;">
-    <h2>Department Comparison</h2>
-    <div class="count-box">
-      Employees in this department (same category): <span id="deptCount"></span>
+<div id="deptComparison" class="section" style="display:none;">
+    <div class="flex" style="justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 style="margin:0;">Department Comparison</h2>
+        <button onclick="printDepartmentTable()" style="margin:0; background:#115f66;">Export Table</button>
     </div>
 
     <table id="deptTable">
@@ -766,6 +766,58 @@ function exportPageToPDF() {
 }
 
 document.getElementById("exportPDF").addEventListener("click", exportPageToPDF);
+
+// ========================= TABLE PDF EXPORT ========================= 
+
+function printDepartmentTable() {
+    // 1. Clone the table to manipulate it off-screen
+    const originalTable = document.getElementById("deptTable");
+    const tableClone = originalTable.cloneNode(true);
+
+    // 2. Remove the "Filter Row" (input boxes) from the clone
+    // This ensures the PDF is clean and doesn't show empty text boxes
+    const filterRow = tableClone.querySelector("#filterRow");
+    if (filterRow) {
+        filterRow.remove();
+    }
+
+    // 3. Open a new window for printing
+    const printWindow = window.open('', '', 'height=800,width=900');
+
+    // 4. Write the HTML structure with specific CSS for the PDF
+    printWindow.document.write('<html><head><title>Department Scores Report</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write(`
+        body { font-family: 'Inter', sans-serif; padding: 40px; color: #1f2937; }
+        h1 { text-align: center; color: #115f66; margin-bottom: 30px; font-size: 24px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background-color: #115f66; color: white; padding: 12px 8px; text-align: left; border: 1px solid #115f66; }
+        td { padding: 10px 8px; border: 1px solid #e5e7eb; }
+        tr:nth-child(even) { background-color: #f9fafb; }
+        /* Style the badges (OK/Inconsistent) inside the PDF */
+        .badge { padding: 4px 8px; border-radius: 99px; font-weight: bold; font-size: 11px; display: inline-block; }
+        .badge-ok { background:#e8f5e9; color:#1b5e20; border:1px solid #a5d6a7; }
+        .badge-warn { background:#fff3cd; color:#7a5a00; border:1px solid #ffe69c; }
+    `);
+    printWindow.document.write('</style></head><body>');
+
+    // 5. Add the Custom Heading and the Clean Table
+    printWindow.document.write('<h1>Overall Department\'s Scores</h1>');
+    printWindow.document.write(tableClone.outerHTML);
+    
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+
+    // 6. Trigger the print dialog (User selects "Save as PDF")
+    printWindow.focus();
+    // Small timeout to ensure styles are loaded before print dialog opens
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 250);
+}
+
+  
 </script>
 
 </body>
