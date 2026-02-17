@@ -127,7 +127,7 @@
 
   <div id="deptComparison" class="section" style="display:none;">
     <div class="flex" style="justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <h2 style="margin:0;">Department Comparison</h2>
+        <h2 style="margin:0;">Overall Department's Scores</h2>
         <button onclick="printDepartmentTable()" style="margin:0; background:#115f66;">Export Table to PDF</button>
     </div>
     <div class="count-box">
@@ -599,12 +599,15 @@
   });
 
   // ========================= 1. DIRECT PDF DOWNLOAD (FULL REPORT) =========================
-  function downloadDashboardPDF() {
+function downloadDashboardPDF() {
     // 1. Create a container for the PDF content
+    // We force a white background and black text to fix the "washed out" look
     const container = document.createElement('div');
+    container.style.width = "100%";
     container.style.padding = "20px";
+    container.style.backgroundColor = "#ffffff"; 
+    container.style.color = "#000000"; 
     container.style.fontFamily = "'Inter', sans-serif";
-    container.style.backgroundColor = "white";
 
     // Header
     const title = document.createElement('h1');
@@ -617,62 +620,78 @@
     // Helper: Clones a section, removes buttons/filters, fixes charts
     function addSection(id) {
         const original = document.getElementById(id);
+        
+        // Only add if the section exists and is currently visible (display != none)
         if (original && original.style.display !== 'none') {
             const clone = original.cloneNode(true);
             
-            // Remove buttons
+            // --- FIX 1: Force colors to avoid "washed out" look ---
+            clone.style.backgroundColor = "#ffffff";
+            clone.style.color = "#000000";
+            clone.style.border = "1px solid #ddd";
+            clone.style.boxShadow = "none";
+            clone.style.padding = "15px";
+            clone.style.marginBottom = "20px";
+            // Prevent section from being cut in half across pages
+            clone.style.pageBreakInside = "avoid"; 
+
+            // --- FIX 2: Remove buttons and inputs ---
             clone.querySelectorAll('button').forEach(b => b.remove());
-            
-            // Remove the table filter row
             const filterRow = clone.querySelector('#filterRow');
             if(filterRow) filterRow.remove();
 
-            // Fix Canvases (Convert to Images)
+            // --- FIX 3: Convert Charts to Images ---
+            // (Standard cloning deletes chart content, so we snap a picture of it)
             const origCanvases = original.querySelectorAll('canvas');
             const cloneCanvases = clone.querySelectorAll('canvas');
             
             origCanvases.forEach((orig, index) => {
-                try {
-                    const img = document.createElement('img');
-                    img.src = orig.toDataURL(); // Capture current state
-                    img.style.width = '100%';
-                    img.style.maxWidth = '100%'; 
-                    // Replace canvas with image in the clone
-                    if (cloneCanvases[index]) {
-                      cloneCanvases[index].parentNode.replaceChild(img, cloneCanvases[index]);
-                    }
-                } catch(e) { console.error("Canvas error", e); }
+                if (cloneCanvases[index]) {
+                    try {
+                        const img = document.createElement('img');
+                        img.src = orig.toDataURL("image/jpeg", 1.0); // High quality
+                        img.style.width = '100%';
+                        img.style.maxWidth = '100%';
+                        img.style.display = 'block';
+                        cloneCanvases[index].parentNode.replaceChild(img, cloneCanvases[index]);
+                    } catch(e) { console.error("Canvas error", e); }
+                }
             });
 
-            // Styling for PDF
-            clone.style.boxShadow = "none";
-            clone.style.border = "1px solid #ddd";
-            clone.style.marginBottom = "25px";
-            clone.style.padding = "15px";
-            
             container.appendChild(clone);
         }
     }
 
-    // Add only the 5 requested sections
+    // Add the specific sections in order
     addSection('employeeInfo');
     addSection('deptComparison');
     addSection('deptAnalysis');
     addSection('byScoreSection');
-    addSection('recommendation');
+    addSection('recommendation'); // This ensures recommendation is grabbed
 
     // Options for html2pdf
     const opt = {
       margin:       0.4,
       filename:     'Evaluation_Report.pdf',
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
+      html2canvas:  { 
+          scale: 2, // High resolution
+          useCORS: true, 
+          backgroundColor: "#ffffff" // Force white background on the canvas
+      },
       jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
 
     // Generate and Download
-    html2pdf().set(opt).from(container).save();
-  }
+    // We append the container to body temporarily to ensure fonts render, then remove it
+    document.body.appendChild(container); 
+    container.style.position = 'absolute';
+    container.style.left = '-9999px'; // Hide it from view while generating
+
+    html2pdf().set(opt).from(container).save().then(() => {
+        document.body.removeChild(container); // Clean up
+    });
+}
 
   // ========================= 2. TABLE PDF EXPORT (PRINT STYLE) ========================= 
   function printDepartmentTable() {
