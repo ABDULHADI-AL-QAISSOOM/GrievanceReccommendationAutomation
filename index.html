@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Staff Evaluation Grievance Analysis</title>
 
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" />
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -24,19 +24,19 @@
       margin:0;background:var(--light-bg);color:var(--ink);
     }
 
-    /* --- NEW HEADER STYLE --- */
+    /* --- NEW HEADER STYLE (Solid Teal + White Text) --- */
     header {
-      background: #ffffff;
-      color: var(--primary); /* Same color as h2 headings */
+      background: var(--primary);
+      color: #ffffff;
       padding: 30px 20px;
       text-align: center;
       font-size: 28px;
       font-weight: 700;
-      letter-spacing: -0.5px;
-      /* Nice visual touches */
-      border-bottom: 4px solid var(--secondary);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 15px rgba(17, 95, 102, 0.3); /* Teal shadow */
       margin-bottom: 30px;
+      /* Optional: rounded bottom corners for a modern look */
+      border-radius: 0 0 16px 16px; 
     }
 
     .container{width:min(1100px,90%);margin:22px auto}
@@ -90,16 +90,16 @@
       padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa;
     }
 
-    /* --- SIGNATURE STYLE --- */
+    /* --- NEW SIGNATURE STYLE --- */
     .signature {
       text-align: center;
-      margin-top: 40px;
-      margin-bottom: 20px;
+      margin-top: 50px;
+      margin-bottom: 30px;
       color: var(--primary);
-      font-size: 14px;
-      font-weight: 600;
-      opacity: 0.8;
-      font-family: 'Courier New', Courier, monospace; /* Monospace for code-like feel */
+      font-size: 24px; /* Larger */
+      font-weight: 400;
+      opacity: 0.9;
+      font-family: 'Dancing Script', cursive; /* Fancy Font */
     }
   </style>
 </head>
@@ -233,7 +233,7 @@
   </div>
 
   <div class="signature">
-    ( designed π Hadi )
+    Designed π Hadi
   </div>
 
 </div>
@@ -645,10 +645,25 @@
     
     // Begin writing HTML
     printWindow.document.write('<html><head><title>Staff Evaluation Grievance Analysis</title>');
+    
+    // IMPORT FONTS INTO PRINT WINDOW (Crucial for the signature)
+    printWindow.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" />');
+
     printWindow.document.write('<style>');
     printWindow.document.write(`
         body { font-family: 'Inter', sans-serif; padding: 40px; color: #000; background: #fff; }
-        h1 { text-align: center; color: #115f66; margin-bottom: 30px; border-bottom: 2px solid #115f66; padding-bottom: 20px; }
+        
+        /* HEADER STYLE FOR PRINT */
+        h1 { 
+          text-align: center; 
+          color: #ffffff; 
+          background-color: #115f66; /* Solid Teal Background */
+          padding: 20px; 
+          margin-bottom: 30px; 
+          border-radius: 0 0 10px 10px;
+          font-size: 24px;
+        }
+
         .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 8px; page-break-inside: avoid; }
         h2 { color: #115f66; margin-top: 0; }
         /* Clean Tables */
@@ -663,8 +678,16 @@
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         /* Chart Images */
         img { max-width: 100%; display: block; margin: 0 auto; }
-        /* Signature Logic */
-        .signature-print { text-align: center; margin-top: 50px; font-weight: 600; opacity: 0.8; font-family: 'Courier New', Courier, monospace; }
+        
+        /* SIGNATURE STYLE FOR PRINT */
+        .signature-print { 
+          text-align: center; 
+          margin-top: 50px; 
+          color: #115f66;
+          font-size: 24px; 
+          font-weight: 400; 
+          font-family: 'Dancing Script', cursive; 
+        }
     `);
     printWindow.document.write('</style></head><body>');
 
