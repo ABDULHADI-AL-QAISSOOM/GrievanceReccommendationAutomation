@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Staff Evaluation Grievance Analysis</title>
 
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" />
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -13,7 +13,7 @@
     :root{
       --primary:#115f66;
       --secondary:#009767;
-      --light-bg:#eef2f7;
+      --light-bg:#f0f4f8; /* Slightly cooler grey */
       --ink:#1f2937;
       --muted:#6b7280;
       --card:#ffffff;
@@ -21,74 +21,94 @@
     *{box-sizing:border-box}
     body{
       font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      margin:0;background:var(--light-bg);color:var(--ink);
+      margin:0;
+      background:var(--light-bg);
+      color:var(--ink);
+      padding-top: 20px; /* Space for the floating header */
     }
 
-    /* --- MODERN GLASS HEADER --- */
+    /* --- NEW "COMMAND CARD" HEADER --- */
     header {
-      /* Semi-transparent white background */
-      background: rgba(255, 255, 255, 0.65);
+      background-color: var(--primary);
+      /* Subtle Diagonal Lines Pattern for Texture */
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.03),
+        rgba(255, 255, 255, 0.03) 1px,
+        transparent 1px,
+        transparent 10px
+      );
       
-      /* The "Blur" effect (Frosted Glass) */
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px); /* For Safari */
-      
-      color: var(--primary);
-      padding: 30px 20px;
+      color: #ffffff;
+      padding: 35px 20px;
       text-align: center;
+      
+      /* Floating Card Style */
+      width: min(1100px, 90%); /* Same width as container */
+      margin: 0 auto 30px auto; /* Centered */
+      border-radius: 16px; /* Smooth rounded corners */
+      
+      /* Deep Shadow to make it pop */
+      box-shadow: 0 10px 30px rgba(17, 95, 102, 0.25);
+      
+      /* Typography */
       font-size: 28px;
-      font-weight: 700;
+      font-weight: 800; /* Extra Bold */
       letter-spacing: -0.5px;
-      
-      /* Subtle border and soft shadow */
-      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-      margin-bottom: 30px;
-      
-      /* Position sticky to keep it visible while scrolling (optional, but modern) */
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      text-transform: uppercase; /* Modern touch */
     }
 
-    .container{width:min(1100px,90%);margin:22px auto}
+    .container{width:min(1100px,90%);margin:0 auto 40px auto}
     
     .section{
       background:var(--card);padding:22px;border-radius:14px;
-      box-shadow:0 8px 24px rgba(0,0,0,.08);margin-top:22px;
-      animation:fadeIn .35s ease;
+      box-shadow:0 4px 12px rgba(0,0,0,0.05); /* Softer shadow */
+      margin-top:22px;
+      border: 1px solid rgba(0,0,0,0.02); /* Very subtle border */
+      animation:fadeIn .4s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
-    @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
     
-    h2{color:var(--primary);margin:0 0 12px}
+    h2{color:var(--primary);margin:0 0 12px; font-weight: 700;}
     p.help{color:var(--muted);margin:6px 0 14px}
     label{display:block;margin-top:10px;font-weight:600}
     
     input[type=file],input[type=number]{
       width:100%;padding:12px;margin-top:6px;border-radius:10px;border:1px solid #d1d5db;font-size:15px;background:#fff;
+      transition: border-color 0.2s;
     }
+    input:focus { outline:none; border-color: var(--primary); }
     
     button{
       background:var(--primary);color:#fff;border:none;border-radius:10px;
-      padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px;
-      transition:all .25s ease;box-shadow:0 6px 14px rgba(17,95,102,.25);
+      padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;margin-top:12px;
+      transition:all .2s ease;box-shadow:0 4px 12px rgba(17,95,102,.2);
     }
-    button:hover{background:var(--secondary);transform:translateY(-1px)}
+    button:hover{background:var(--secondary);transform:translateY(-2px); box-shadow:0 6px 15px rgba(0,151,103,.3);}
     
     .status{font-weight:600;color:var(--secondary);margin-top:10px}
     
-    table{width:100%;border-collapse:collapse;margin-top:14px;font-size:14px}
-    thead th{background:var(--primary);color:#fff;padding:12px;text-align:left;position:sticky;top:0}
-    tbody td{padding:10px;border-bottom:1px solid #e5e7eb}
+    table{width:100%;border-collapse:separate; border-spacing: 0; margin-top:14px;font-size:14px}
+    thead th{
+        background:var(--primary);color:#fff;padding:14px;text-align:left;position:sticky;top:0;
+        /* Rounded corners for table header */
+        first-child { border-radius: 10px 0 0 0; }
+        last-child { border-radius: 0 10px 0 0; }
+    }
+    /* Rounded corners fix for headers */
+    thead tr:first-child th:first-child { border-top-left-radius: 8px; }
+    thead tr:first-child th:last-child { border-top-right-radius: 8px; }
+
+    tbody td{padding:12px;border-bottom:1px solid #eef2f7}
     
     .count-box{
       background:#ddf3e9;border-left:6px solid var(--secondary);
       padding:10px 12px;border-radius:10px;margin:6px 0 12px;font-weight:600;
     }
     
-    .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
-    .badge-ok{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7}
-    .badge-warn{background:#fff3cd;color:#7a5a00;border:1px solid #ffe69c}
+    .badge{display:inline-block;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:700}
+    .badge-ok{background:#e8f5e9;color:#1b5e20;border:1px solid #c8e6c9}
+    .badge-warn{background:#fff8e1;color:#b08d00;border:1px solid #ffecb3}
     
     .grid{display:grid;grid-template-columns:1fr;gap:18px}
     @media (min-width:900px){.grid{grid-template-columns:1fr 1fr}}
@@ -99,20 +119,21 @@
     .small{font-size:13px}
     .pill{
       display:inline-flex;align-items:center;gap:6px;
-      padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa;
+      padding:6px 12px;border-radius:99px;border:1px solid #e5e7eb;background:#f9fafb; font-weight: 500;
     }
 
-    /* --- TECH/MODERN SIGNATURE --- */
+    /* --- SIGNATURE (Clean Tech Look) --- */
     .signature {
       text-align: center;
       margin-top: 50px;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       color: var(--primary);
-      font-size: 16px; 
+      font-size: 15px; 
       font-weight: 600;
-      opacity: 0.8;
-      font-family: 'Courier New', Courier, monospace; /* Tech look */
-      letter-spacing: 1px;
+      opacity: 0.7;
+      font-family: 'Courier New', Courier, monospace; 
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
     }
   </style>
 </head>
@@ -665,12 +686,12 @@
         /* HEADER STYLE FOR PRINT */
         h1 { 
           text-align: center; 
-          color: #115f66; /* Teal Text */
-          background-color: #f3f4f6; /* Modern Grey Background */
-          padding: 20px; 
+          color: #ffffff; 
+          background: #115f66; /* Solid dark background for print readability */
+          padding: 30px 20px; 
           margin-bottom: 30px; 
-          border-bottom: 2px solid #ccc;
           font-size: 24px;
+          border-radius: 20px; /* Match screen style */
         }
 
         .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 8px; page-break-inside: avoid; }
@@ -696,6 +717,8 @@
           font-size: 16px; 
           font-weight: 600; 
           font-family: 'Courier New', Courier, monospace; 
+          letter-spacing: 1px;
+          text-transform: uppercase;
         }
     `);
     printWindow.document.write('</style></head><body>');
