@@ -9,6 +9,8 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     :root{
@@ -81,7 +83,7 @@
 <div class="container">
 
   <div style="text-align: right;">
-    <button id="exportPDF" style="margin-top:0;">Export Page as PDF</button>
+    <button id="exportDashboardBtn" onclick="downloadDashboardPDF()" style="margin-top:0;">Download Report as PDF</button>
   </div>
 
   <div class="section">
@@ -596,19 +598,83 @@
     el.addEventListener("input", applyFiltersAndSorting);
   });
 
-  // ========================= PAGE PDF EXPORT =========================
-  function exportPageToPDF() {
-    const originalTitle = document.title;
-    document.title = "Staff Evaluation Report";
-    const printWindow = window.open('', '_blank');
-    printWindow.document.open();
-    printWindow.document.write(`<html><head><title>Export</title><style>body { font-family: Arial, sans-serif; zoom: 80%; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #ccc; padding: 6px; }</style></head><body>${document.body.innerHTML}</body></html>`);
-    printWindow.document.close();
-    printWindow.onload = function () { printWindow.focus(); printWindow.print(); printWindow.close(); document.title = originalTitle; };
-  }
-  document.getElementById("exportPDF").addEventListener("click", exportPageToPDF);
+  // ========================= 1. DIRECT PDF DOWNLOAD (FULL REPORT) =========================
+  function downloadDashboardPDF() {
+    // 1. Create a container for the PDF content
+    const container = document.createElement('div');
+    container.style.padding = "20px";
+    container.style.fontFamily = "'Inter', sans-serif";
+    container.style.backgroundColor = "white";
 
-  // ========================= TABLE PDF EXPORT ========================= 
+    // Header
+    const title = document.createElement('h1');
+    title.textContent = "Staff Evaluation Grievance Analysis";
+    title.style.textAlign = "center";
+    title.style.color = "#115f66";
+    title.style.marginBottom = "30px";
+    container.appendChild(title);
+
+    // Helper: Clones a section, removes buttons/filters, fixes charts
+    function addSection(id) {
+        const original = document.getElementById(id);
+        if (original && original.style.display !== 'none') {
+            const clone = original.cloneNode(true);
+            
+            // Remove buttons
+            clone.querySelectorAll('button').forEach(b => b.remove());
+            
+            // Remove the table filter row
+            const filterRow = clone.querySelector('#filterRow');
+            if(filterRow) filterRow.remove();
+
+            // Fix Canvases (Convert to Images)
+            const origCanvases = original.querySelectorAll('canvas');
+            const cloneCanvases = clone.querySelectorAll('canvas');
+            
+            origCanvases.forEach((orig, index) => {
+                try {
+                    const img = document.createElement('img');
+                    img.src = orig.toDataURL(); // Capture current state
+                    img.style.width = '100%';
+                    img.style.maxWidth = '100%'; 
+                    // Replace canvas with image in the clone
+                    if (cloneCanvases[index]) {
+                      cloneCanvases[index].parentNode.replaceChild(img, cloneCanvases[index]);
+                    }
+                } catch(e) { console.error("Canvas error", e); }
+            });
+
+            // Styling for PDF
+            clone.style.boxShadow = "none";
+            clone.style.border = "1px solid #ddd";
+            clone.style.marginBottom = "25px";
+            clone.style.padding = "15px";
+            
+            container.appendChild(clone);
+        }
+    }
+
+    // Add only the 5 requested sections
+    addSection('employeeInfo');
+    addSection('deptComparison');
+    addSection('deptAnalysis');
+    addSection('byScoreSection');
+    addSection('recommendation');
+
+    // Options for html2pdf
+    const opt = {
+      margin:       0.4,
+      filename:     'Evaluation_Report.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+
+    // Generate and Download
+    html2pdf().set(opt).from(container).save();
+  }
+
+  // ========================= 2. TABLE PDF EXPORT (PRINT STYLE) ========================= 
   function printDepartmentTable() {
     const originalTable = document.getElementById("deptTable");
     const tableClone = originalTable.cloneNode(true);
