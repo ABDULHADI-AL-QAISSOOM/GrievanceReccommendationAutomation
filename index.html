@@ -17,7 +17,6 @@
       --ink:#1f2937;
       --muted:#6b7280;
       --card:#ffffff;
-      --header-bg:#f3f4f6; /* Light Modern Grey */
     }
     *{box-sizing:border-box}
     body{
@@ -25,19 +24,31 @@
       margin:0;background:var(--light-bg);color:var(--ink);
     }
 
-    /* --- MODERN GREY HEADER --- */
+    /* --- MODERN GLASS HEADER --- */
     header {
-      background: var(--header-bg);
+      /* Semi-transparent white background */
+      background: rgba(255, 255, 255, 0.65);
+      
+      /* The "Blur" effect (Frosted Glass) */
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px); /* For Safari */
+      
       color: var(--primary);
       padding: 30px 20px;
       text-align: center;
       font-size: 28px;
       font-weight: 700;
       letter-spacing: -0.5px;
-      /* Modern touches */
-      border-bottom: 3px solid #d1d5db; /* Subtle grey border */
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      
+      /* Subtle border and soft shadow */
+      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
       margin-bottom: 30px;
+      
+      /* Position sticky to keep it visible while scrolling (optional, but modern) */
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
     .container{width:min(1100px,90%);margin:22px auto}
