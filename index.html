@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Staff Evaluation Grievance Analysis</title>
 
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" />
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -17,6 +17,7 @@
       --ink:#1f2937;
       --muted:#6b7280;
       --card:#ffffff;
+      --header-bg:#f3f4f6; /* Light Modern Grey */
     }
     *{box-sizing:border-box}
     body{
@@ -24,19 +25,19 @@
       margin:0;background:var(--light-bg);color:var(--ink);
     }
 
-    /* --- NEW HEADER STYLE (Solid Teal + White Text) --- */
+    /* --- MODERN GREY HEADER --- */
     header {
-      background: var(--primary);
-      color: #ffffff;
+      background: var(--header-bg);
+      color: var(--primary);
       padding: 30px 20px;
       text-align: center;
       font-size: 28px;
       font-weight: 700;
-      letter-spacing: 0.5px;
-      box-shadow: 0 4px 15px rgba(17, 95, 102, 0.3); /* Teal shadow */
+      letter-spacing: -0.5px;
+      /* Modern touches */
+      border-bottom: 3px solid #d1d5db; /* Subtle grey border */
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
       margin-bottom: 30px;
-      /* Optional: rounded bottom corners for a modern look */
-      border-radius: 0 0 16px 16px; 
     }
 
     .container{width:min(1100px,90%);margin:22px auto}
@@ -90,16 +91,17 @@
       padding:6px 10px;border-radius:999px;border:1px solid #e5e7eb;background:#fafafa;
     }
 
-    /* --- NEW SIGNATURE STYLE --- */
+    /* --- TECH/MODERN SIGNATURE --- */
     .signature {
       text-align: center;
       margin-top: 50px;
       margin-bottom: 30px;
       color: var(--primary);
-      font-size: 24px; /* Larger */
-      font-weight: 400;
-      opacity: 0.9;
-      font-family: 'Dancing Script', cursive; /* Fancy Font */
+      font-size: 16px; 
+      font-weight: 600;
+      opacity: 0.8;
+      font-family: 'Courier New', Courier, monospace; /* Tech look */
+      letter-spacing: 1px;
     }
   </style>
 </head>
@@ -645,10 +647,6 @@
     
     // Begin writing HTML
     printWindow.document.write('<html><head><title>Staff Evaluation Grievance Analysis</title>');
-    
-    // IMPORT FONTS INTO PRINT WINDOW (Crucial for the signature)
-    printWindow.document.write('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" />');
-
     printWindow.document.write('<style>');
     printWindow.document.write(`
         body { font-family: 'Inter', sans-serif; padding: 40px; color: #000; background: #fff; }
@@ -656,11 +654,11 @@
         /* HEADER STYLE FOR PRINT */
         h1 { 
           text-align: center; 
-          color: #ffffff; 
-          background-color: #115f66; /* Solid Teal Background */
+          color: #115f66; /* Teal Text */
+          background-color: #f3f4f6; /* Modern Grey Background */
           padding: 20px; 
           margin-bottom: 30px; 
-          border-radius: 0 0 10px 10px;
+          border-bottom: 2px solid #ccc;
           font-size: 24px;
         }
 
@@ -684,9 +682,9 @@
           text-align: center; 
           margin-top: 50px; 
           color: #115f66;
-          font-size: 24px; 
-          font-weight: 400; 
-          font-family: 'Dancing Script', cursive; 
+          font-size: 16px; 
+          font-weight: 600; 
+          font-family: 'Courier New', Courier, monospace; 
         }
     `);
     printWindow.document.write('</style></head><body>');
@@ -729,7 +727,7 @@
     addSectionToPrint('recommendation');
 
     // Add Signature to Print View
-    printWindow.document.write('<div class="signature-print">( designed π Hadi )</div>');
+    printWindow.document.write('<div class="signature-print">Designed π Hadi</div>');
 
     printWindow.document.write('</body></html>');
     printWindow.document.close();
