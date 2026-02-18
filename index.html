@@ -28,7 +28,7 @@
       padding-top: 20px;
     }
 
-    /* --- MAIN PAGE HEADER (Solid Command Card) --- */
+    /* --- PAGE HEADER (Floating Command Card) --- */
     header {
       background-color: var(--primary);
       color: #ffffff;
@@ -38,7 +38,6 @@
       margin: 0 auto 30px auto;
       border-radius: 16px;
       box-shadow: 0 10px 30px rgba(17, 95, 102, 0.25);
-      
       font-size: 28px;
       font-weight: 800;
       letter-spacing: -0.5px;
@@ -77,90 +76,76 @@
     .status{font-weight:600;color:var(--secondary);margin-top:10px}
     .count-box{ background:#ddf3e9;border-left:6px solid var(--secondary); padding:12px 16px;border-radius:8px;margin:6px 0 16px;font-weight:600; }
     
-    /* --- TABLE STYLING: WHITE GLASS --- */
+    /* --- TABLE STYLING: HIGH CONTRAST SOLID --- */
     table { width:100%; border-collapse:separate; border-spacing: 0; margin-top:14px; font-size:14px; }
     
+    /* NO STICKY POSITIONING (It will scroll away) */
     thead {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        /* Subtle shadow for the floating effect */
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
-        border-radius: 16px;
+        position: static; 
     }
 
-    /* THE GLASS EFFECT APPLIED TO TH */
-    thead th {
-        /* Semi-transparent White */
-        background: rgba(255, 255, 255, 0.85); 
-        
-        /* Blur Effect */
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        
-        /* Text Color is now TEAL (Reversed) */
-        color: var(--primary);
-    }
-
-    /* Row 1: Labels (Larger & Centered) */
+    /* Row 1: Labels (Solid Teal Background) */
     thead tr:first-child th {
+        background: var(--primary); /* High Contrast Teal */
+        color: #ffffff; /* White Text */
+        
         padding: 20px 16px 10px 16px;
-        
-        /* Centered Alignment */
         text-align: center; 
-        
-        font-weight: 800; /* Extra Bold */
+        font-weight: 800; 
         text-transform: uppercase;
-        
-        /* Increased Size */
         font-size: 15px; 
-        
         letter-spacing: 0.5px;
         cursor: pointer;
         user-select: none;
         border-bottom: none;
     }
+    
     thead tr:first-child th:hover {
-        background: rgba(255, 255, 255, 1); /* Solid white on hover */
-        color: var(--secondary); /* Green highlight on hover */
+        background: #0d4b50; /* Slightly darker on hover */
     }
 
-    /* Row 2: Filters */
+    /* Row 2: Filters (Solid Teal Background) */
     thead tr:last-child th {
-        padding: 4px 16px 24px 16px;
-        /* Grey bottom border */
-        border-bottom: 4px solid #e5e7eb; 
+        background: var(--primary); /* Continue the Teal background */
+        padding: 4px 16px 20px 16px;
+        
+        /* The Grey Separator Line below the header */
+        border-bottom: 4px solid #d1d5db; 
     }
 
-    /* INPUTS ON WHITE BACKGROUND */
+    /* INPUTS ON TEAL BACKGROUND */
     #filterRow input, #filterRow select {
         width: 100%;
         padding: 8px 16px; 
         margin-top: 4px;
         border-radius: 99px; /* Pill Shape */
         
-        /* Light Grey Border */
-        border: 1px solid #d1d5db; 
+        border: none;
         
-        /* White Background */
+        /* Bright White Background for Inputs so they pop */
         background: #ffffff; 
         
-        color: var(--ink);
+        color: var(--primary); /* Teal text inside */
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
+        text-align: center;
         transition: all 0.2s ease;
-        text-align: center; /* Center text inside inputs too */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     #filterRow input::placeholder {
         color: #9ca3af;
     }
     #filterRow input:focus, #filterRow select:focus {
-        background: #fff;
-        border-color: var(--primary);
         outline: none;
-        box-shadow: 0 0 0 3px rgba(17, 95, 102, 0.1); /* Teal Glow */
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3); /* White Glow */
     }
     
+    /* Fix Select Dropdown */
+    #filterRow select {
+        color: var(--primary);
+        cursor: pointer;
+    }
+
     /* Rounded corners for the Header Block */
     thead tr:first-child th:first-child { border-top-left-radius: 16px; }
     thead tr:first-child th:last-child { border-top-right-radius: 16px; }
@@ -171,11 +156,10 @@
         border-bottom: 1px solid #f3f4f6; 
         color: var(--ink); 
         vertical-align: middle;
-        text-align: center; /* Center body text to match headers */
+        text-align: center;
     }
-    /* Align Name column to left for readability */
     tbody td:nth-child(2) { text-align: left; padding-left: 24px; }
-    thead tr:first-child th:nth-child(2) { text-align: left; padding-left: 24px; } /* Match header to left */
+    thead tr:first-child th:nth-child(2) { text-align: left; padding-left: 24px; }
 
     tbody tr:hover { background-color: #f9fafb; }
     /* --- END TABLE --- */
@@ -778,8 +762,8 @@
         h2 { color: #115f66; margin-top: 0; }
         /* Clean Tables */
         table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        th { background-color: #115f66; color: white; padding: 8px; text-align: left; border: 1px solid #115f66; }
-        td { padding: 8px; border: 1px solid #ddd; }
+        th { background-color: #115f66; color: white; padding: 12px 8px; text-align: left; border: 1px solid #115f66; }
+        td { padding: 10px 8px; border: 1px solid #e5e7eb; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         /* Badges */
         .badge { padding: 4px 8px; border-radius: 99px; font-weight: bold; font-size: 11px; display: inline-block; border: 1px solid #ccc; }
