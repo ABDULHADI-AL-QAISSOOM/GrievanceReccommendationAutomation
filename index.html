@@ -13,10 +13,11 @@
     :root{
       --primary:#115f66;
       --secondary:#009767;
-      --light-bg:#f0f4f8; 
+      --light-bg:#f3f4f6; 
       --ink:#1f2937;
       --muted:#6b7280;
       --card:#ffffff;
+      --border-grey: #e5e7eb;
     }
     *{box-sizing:border-box}
     body{
@@ -27,7 +28,7 @@
       padding-top: 20px;
     }
 
-    /* --- CLEAN COMMAND CARD HEADER --- */
+    /* --- CLEAN HEADER --- */
     header {
       background-color: var(--primary);
       color: #ffffff;
@@ -46,9 +47,9 @@
     .container{width:min(1100px,90%);margin:0 auto 40px auto}
     
     .section{
-      background:var(--card);padding:22px;border-radius:14px;
-      box-shadow:0 4px 12px rgba(0,0,0,0.05);
-      margin-top:22px;
+      background:var(--card);padding:24px;border-radius:16px;
+      box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);
+      margin-top:24px;
       border: 1px solid rgba(0,0,0,0.02);
       animation:fadeIn .4s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -73,89 +74,87 @@
     button:hover{background:var(--secondary);transform:translateY(-2px); box-shadow:0 6px 15px rgba(0,151,103,.3);}
     
     .status{font-weight:600;color:var(--secondary);margin-top:10px}
-    .count-box{ background:#ddf3e9;border-left:6px solid var(--secondary); padding:10px 12px;border-radius:10px;margin:6px 0 12px;font-weight:600; }
+    .count-box{ background:#ddf3e9;border-left:6px solid var(--secondary); padding:12px 16px;border-radius:8px;margin:6px 0 16px;font-weight:600; }
     
-    /* --- TABLE STYLING "CONTROL PANEL" --- */
+    /* --- MODERN TABLE STYLING --- */
     table { width:100%; border-collapse:separate; border-spacing: 0; margin-top:14px; font-size:14px; }
     
-    /* 1. Header Container */
     thead {
         position: sticky;
         top: 0;
         z-index: 10;
+        /* Shadow for depth when scrolling */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
-    /* 2. Sort Labels Row (Top) */
+    /* Row 1: Labels */
     thead tr:first-child th {
         background: var(--primary);
         color: #fff;
-        padding: 16px 12px 8px 12px; /* Extra top padding */
+        padding: 18px 16px 8px 16px;
         text-align: left;
         font-weight: 700;
         text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 0.5px;
-        cursor: pointer; /* Indicates clickable */
+        font-size: 11px;
+        letter-spacing: 1px; /* Wide tracking for modern look */
+        cursor: pointer;
         user-select: none;
-        transition: background 0.2s;
     }
     thead tr:first-child th:hover {
-        background: #0d4b50; /* Slightly darker on hover */
-    }
-    /* Add a subtle arrow hint */
-    thead tr:first-child th::after {
-        content: ' ↕';
-        opacity: 0.3;
-        font-size: 10px;
+        background: #0d4b50; 
     }
 
-    /* 3. Filter Inputs Row (Bottom) */
+    /* Row 2: Filters */
     thead tr:last-child th {
         background: var(--primary);
-        padding: 4px 12px 16px 12px; /* Extra bottom padding */
-        border-bottom: 4px solid var(--secondary); /* visual separator */
+        padding: 4px 16px 20px 16px;
+        /* THE REQUESTED GREY LINE */
+        border-bottom: 4px solid #d1d5db; 
     }
 
-    /* 4. The Filter Inputs themselves */
+    /* PILL INPUTS */
     #filterRow input, #filterRow select {
         width: 100%;
-        padding: 8px 10px;
-        margin-top: 0;
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.2); /* Subtle border */
-        background: rgba(255, 255, 255, 0.1); /* Glass effect */
+        padding: 8px 16px; /* High padding for pill shape */
+        margin-top: 4px;
+        border-radius: 99px; /* Pill Shape */
+        border: 1px solid rgba(255, 255, 255, 0.15); 
+        background: rgba(0, 0, 0, 0.15); /* Darker glass for contrast */
         color: #ffffff;
         font-size: 13px;
         font-weight: 500;
+        transition: all 0.2s ease;
     }
     #filterRow input::placeholder {
-        color: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.6);
     }
     #filterRow input:focus, #filterRow select:focus {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 1); /* White on focus */
+        color: var(--primary); /* Teal text on focus */
         outline: none;
-        border-color: #ffffff;
+        box-shadow: 0 0 0 3px rgba(255,255,255,0.2);
     }
-    /* Fix Select Dropdown Arrow Color */
+    
+    /* Fix Select Dropdown */
     #filterRow select {
         color: #fff;
+        cursor: pointer;
     }
     #filterRow select option {
         background: #fff;
         color: #333;
     }
 
-    /* Corner rounding for the top block */
+    /* Rounded corners for the Header Block */
     thead tr:first-child th:first-child { border-top-left-radius: 12px; }
     thead tr:first-child th:last-child { border-top-right-radius: 12px; }
 
-    /* Body Rows */
-    tbody td { padding: 14px 12px; border-bottom: 1px solid #f0f2f5; color: var(--ink); }
+    /* Body */
+    tbody td { padding: 16px; border-bottom: 1px solid #f3f4f6; color: var(--ink); vertical-align: middle; }
     tbody tr:hover { background-color: #f9fafb; }
-    
-    /* --- END TABLE STYLING --- */
+    /* --- END TABLE --- */
 
-    .badge{display:inline-block;padding:4px 8px;border-radius:6px;font-size:12px;font-weight:700}
+    .badge{display:inline-block;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700}
     .badge-ok{background:#e8f5e9;color:#1b5e20;border:1px solid #c8e6c9}
     .badge-warn{background:#fff8e1;color:#b08d00;border:1px solid #ffecb3}
     
@@ -255,13 +254,13 @@
           <th data-col="flag">Flag</th>
         </tr>
         <tr id="filterRow">
-          <th><input type="text" id="filterID" placeholder="Filter ID..." class="small"></th>
-          <th><input type="text" id="filterName" placeholder="Filter Name..." class="small"></th>
-          <th><input type="text" id="filterTotal" placeholder="Filter Total..." class="small"></th>
-          <th><input type="text" id="filterScore" placeholder="Filter Score..." class="small"></th>
+          <th><input type="text" id="filterID" placeholder="Filter..." class="small"></th>
+          <th><input type="text" id="filterName" placeholder="Filter..." class="small"></th>
+          <th><input type="text" id="filterTotal" placeholder="Filter..." class="small"></th>
+          <th><input type="text" id="filterScore" placeholder="Filter..." class="small"></th>
           <th>
             <select id="filterFlag" class="small">
-              <option value="">All Statuses</option>
+              <option value="">All</option>
               <option value="OK">OK</option>
               <option value="Inconsistent">Inconsistent</option>
             </select>
@@ -715,11 +714,13 @@
 
   // ========================= 1. PRINT FULL REPORT (POP-OUT) =========================
   function printFullReport() {
+    // Safety check: Don't print if no data exists
     if(document.getElementById('deptComparison').style.display === 'none'){
         alert("Please search for an employee first to generate a report.");
         return;
     }
 
+    // Open a new window
     const printWindow = window.open('', '', 'height=900,width=1000');
     
     // Begin writing HTML
@@ -752,101 +753,4 @@
         .flex { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         /* Chart Images */
-        img { max-width: 100%; display: block; margin: 0 auto; }
-        
-        /* SIGNATURE STYLE FOR PRINT */
-        .signature-print { 
-          text-align: center; 
-          margin-top: 50px; 
-          color: #115f66;
-          font-size: 16px; 
-          font-weight: 600; 
-          font-family: 'Courier New', Courier, monospace; 
-          letter-spacing: 1px;
-          text-transform: uppercase;
-        }
-    `);
-    printWindow.document.write('</style></head><body>');
-
-    printWindow.document.write('<h1>Staff Evaluation Grievance Analysis</h1>');
-
-    // Helper to clone and process visible sections
-    function addSectionToPrint(id) {
-        const original = document.getElementById(id);
-        if (original && original.style.display !== 'none') {
-            const clone = original.cloneNode(true);
-
-            // Remove interactive elements
-            clone.querySelectorAll('button').forEach(b => b.remove());
-            const filterRow = clone.querySelector('#filterRow');
-            if(filterRow) filterRow.remove();
-
-            // CONVERT CANVAS TO IMAGES (Crucial for printing charts)
-            const origCanvases = original.querySelectorAll('canvas');
-            const cloneCanvases = clone.querySelectorAll('canvas');
-            origCanvases.forEach((orig, i) => {
-                if (cloneCanvases[i]) {
-                    const img = document.createElement('img');
-                    img.src = orig.toDataURL('image/jpeg', 1.0);
-                    cloneCanvases[i].parentNode.replaceChild(img, cloneCanvases[i]);
-                }
-            });
-
-            printWindow.document.write('<div class="section">');
-            printWindow.document.write(clone.innerHTML);
-            printWindow.document.write('</div>');
-        }
-    }
-
-    addSectionToPrint('employeeInfo');
-    addSectionToPrint('deptComparison');
-    addSectionToPrint('deptAnalysis');
-    addSectionToPrint('byScoreSection');
-    addSectionToPrint('recommendation');
-
-    printWindow.document.write('<div class="signature-print">Designed π Hadi</div>');
-
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-
-    printWindow.focus();
-    setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-    }, 250); 
-  }
-
-
-  // ========================= 2. TABLE PDF EXPORT (PRINT STYLE) ========================= 
-  function printDepartmentTable() {
-    const originalTable = document.getElementById("deptTable");
-    const tableClone = originalTable.cloneNode(true);
-    const filterRow = tableClone.querySelector("#filterRow");
-    if (filterRow) filterRow.remove();
-
-    const printWindow = window.open('', '', 'height=800,width=900');
-    printWindow.document.write('<html><head><title>Department Scores Report</title><style>');
-    printWindow.document.write(`
-        body { font-family: 'Inter', sans-serif; padding: 40px; color: #1f2937; }
-        h1 { text-align: center; color: #115f66; margin-bottom: 30px; font-size: 24px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { background-color: #115f66; color: white; padding: 12px 8px; text-align: left; border: 1px solid #115f66; }
-        td { padding: 10px 8px; border: 1px solid #e5e7eb; }
-        tr:nth-child(even) { background-color: #f9fafb; }
-        .badge { padding: 4px 8px; border-radius: 99px; font-weight: bold; font-size: 11px; display: inline-block; }
-        .badge-ok { background:#e8f5e9; color:#1b5e20; border:1px solid #a5d6a7; }
-        .badge-warn { background:#fff3cd; color:#7a5a00; border:1px solid #ffe69c; }
-    `);
-    printWindow.document.write('</style></head><body>');
-    printWindow.document.write('<h1>Overall Department\'s Scores</h1>');
-    printWindow.document.write(tableClone.outerHTML);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-
-    printWindow.focus();
-    setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
-  }
-</script>
-
-</body>
-</html>
+        img { max-width: 100%; display: block;
