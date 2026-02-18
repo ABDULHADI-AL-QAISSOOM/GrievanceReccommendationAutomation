@@ -753,4 +753,101 @@
         .flex { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         /* Chart Images */
-        img { max-width: 100%; display: block;
+        img { max-width: 100%; display: block; margin: 0 auto; }
+        
+        /* SIGNATURE STYLE FOR PRINT */
+        .signature-print { 
+          text-align: center; 
+          margin-top: 50px; 
+          color: #115f66;
+          font-size: 16px; 
+          font-weight: 600; 
+          font-family: 'Courier New', Courier, monospace; 
+          letter-spacing: 1px;
+          text-transform: uppercase;
+        }
+    `);
+    printWindow.document.write('</style></head><body>');
+
+    printWindow.document.write('<h1>Staff Evaluation Grievance Analysis</h1>');
+
+    // Helper to clone and process visible sections
+    function addSectionToPrint(id) {
+        const original = document.getElementById(id);
+        if (original && original.style.display !== 'none') {
+            const clone = original.cloneNode(true);
+
+            // Remove interactive elements
+            clone.querySelectorAll('button').forEach(b => b.remove());
+            const filterRow = clone.querySelector('#filterRow');
+            if(filterRow) filterRow.remove();
+
+            // CONVERT CANVAS TO IMAGES (Crucial for printing charts)
+            const origCanvases = original.querySelectorAll('canvas');
+            const cloneCanvases = clone.querySelectorAll('canvas');
+            origCanvases.forEach((orig, i) => {
+                if (cloneCanvases[i]) {
+                    const img = document.createElement('img');
+                    img.src = orig.toDataURL('image/jpeg', 1.0);
+                    cloneCanvases[i].parentNode.replaceChild(img, cloneCanvases[i]);
+                }
+            });
+
+            printWindow.document.write('<div class="section">');
+            printWindow.document.write(clone.innerHTML);
+            printWindow.document.write('</div>');
+        }
+    }
+
+    addSectionToPrint('employeeInfo');
+    addSectionToPrint('deptComparison');
+    addSectionToPrint('deptAnalysis');
+    addSectionToPrint('byScoreSection');
+    addSectionToPrint('recommendation');
+
+    printWindow.document.write('<div class="signature-print">Designed π Hadi</div>');
+
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 250); 
+  }
+
+
+  // ========================= 2. TABLE PDF EXPORT (PRINT STYLE) ========================= 
+  function printDepartmentTable() {
+    const originalTable = document.getElementById("deptTable");
+    const tableClone = originalTable.cloneNode(true);
+    const filterRow = tableClone.querySelector("#filterRow");
+    if (filterRow) filterRow.remove();
+
+    const printWindow = window.open('', '', 'height=800,width=900');
+    printWindow.document.write('<html><head><title>Department Scores Report</title><style>');
+    printWindow.document.write(`
+        body { font-family: 'Inter', sans-serif; padding: 40px; color: #1f2937; }
+        h1 { text-align: center; color: #115f66; margin-bottom: 30px; font-size: 24px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background-color: #115f66; color: white; padding: 12px 8px; text-align: left; border: 1px solid #115f66; }
+        td { padding: 10px 8px; border: 1px solid #e5e7eb; }
+        tr:nth-child(even) { background-color: #f9fafb; }
+        .badge { padding: 4px 8px; border-radius: 99px; font-weight: bold; font-size: 11px; display: inline-block; }
+        .badge-ok { background:#e8f5e9; color:#1b5e20; border:1px solid #a5d6a7; }
+        .badge-warn { background:#fff3cd; color:#7a5a00; border:1px solid #ffe69c; }
+    `);
+    printWindow.document.write('</style></head><body>');
+    printWindow.document.write('<h1>Overall Department\'s Scores</h1>');
+    printWindow.document.write(tableClone.outerHTML);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+
+    printWindow.focus();
+    setTimeout(() => { printWindow.print(); printWindow.close(); }, 250);
+  }
+</script>
+
+</body>
+</html>
