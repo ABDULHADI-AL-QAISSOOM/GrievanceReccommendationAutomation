@@ -551,7 +551,7 @@
 
     let rec = "";
     if (normal) {
-      rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend no changes in the evaluation score.`;
+      rec = `Based on a review of previous evaluations and a comparison of the employee’s recent evaluation with peers within the same department, and taking into account the department’s average rating of ${avg.toFixed(2)}, we recommend no changes in the evaluation score.`;
     } else {
       let reasons = [];
       const peersWithLowerTotalHigherScore = group.filter(p => p.total < emp.total && p.score > emp.score);
