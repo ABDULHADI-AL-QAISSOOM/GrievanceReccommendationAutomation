@@ -68,8 +68,15 @@
     label{display:block;margin-top:10px;font-weight:600}
     
     /* General Inputs */
-    input[type=file], input[type=number]{
-      width:100%;padding:12px;margin-top:6px;border-radius:10px;border:1px solid #d1d5db;font-size:15px;background:#fff;
+    /* UPDATED: Added input[type=text] to ensure proper styling */
+    input[type=file], input[type=number], input[type=text] {
+      width:100%;
+      padding:12px;
+      margin-top:6px;
+      border-radius:10px;
+      border:1px solid #d1d5db;
+      font-size:15px;
+      background:#fff;
       transition: border-color 0.2s;
     }
     input:focus { outline:none; border-color: var(--primary); }
@@ -104,10 +111,15 @@
     .status{font-weight:600;color:var(--secondary);margin-top:10px}
     .count-box{ background:#ddf3e9;border-left:6px solid var(--secondary); padding:12px 16px;border-radius:8px;margin:6px 0 16px;font-weight:600; }
     
+    /* Flex Container fixes */
+    .flex { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    
+    /* NEW: Make the search input grow to fill space */
+    .flex input { flex: 1; margin-top: 24px; /* Align with button */ } 
+
     /* --- TABLE STYLING: HIGH CONTRAST SOLID --- */
     table { width:100%; border-collapse:separate; border-spacing: 0; margin-top:14px; font-size:14px; }
     
-    /* NO STICKY POSITIONING (It will scroll away) */
     thead { position: static; }
 
     /* Row 1: Labels (Solid Teal Background) */
@@ -180,7 +192,6 @@
     
     canvas{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:8px}
     .muted{color:var(--muted)}
-    .flex{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
     .small{font-size:13px}
     .pill{
       display:inline-flex;align-items:center;gap:6px;
@@ -363,6 +374,10 @@
   let totalChartObj = null;
   let totalByScoreChartObj = null;
   let scatterChartObj = null;
+
+  // --- CENSORSHIP STATE ---
+  let anonIdCounter = 1;
+  let anonMap = {};
 
   // ====== Excel Loading ======
   function readExcelFile(file, category){
