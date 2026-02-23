@@ -190,7 +190,7 @@
       padding:6px 12px;border-radius:99px;border:1px solid #e5e7eb;background:#f9fafb; font-weight: 500;
     }
     .pill-target {
-      background: #e8f5e9; 
+      background: #e8f5e9; /* Green tint to highlight target */
       border-color: #a5d6a7;
     }
 
@@ -367,10 +367,6 @@
   let totalByScoreChartObj = null;
   let scatterChartObj = null;
 
-  // --- CENSORSHIP STATE ---
-  let anonIdCounter = 1;
-  let anonMap = {};
-
   // ====== Excel Loading ======
   function readExcelFile(file, category){
     return new Promise((resolve, reject) => {
@@ -386,20 +382,9 @@
             const rawId = String(r["KFUPM ID"] ?? "").trim();
             const rawName = String(r["Name"] ?? "").trim();
             
-            // Map real identity to anonymous identity
-            if (rawId && !anonMap[rawId]) {
-              anonMap[rawId] = {
-                id: "XXXXXXXX",
-                name: "Employee " + anonIdCounter
-              };
-              anonIdCounter++;
-            }
-
             return {
               realId: rawId,           
               realName: rawName,       
-              id: rawId ? anonMap[rawId].id : "", 
-              name: rawId ? anonMap[rawId].name : "", 
               dept: String(r["Department"] ?? "").trim(),
               score: Number(r["Overall Score"]),
               total: Number(r["Total (100)"]),
@@ -421,11 +406,7 @@
     const chief = document.getElementById("fileChief").files[0];
 
     const status = document.getElementById("fileStatus");
-    status.textContent = "Loading and anonymizing files...";
-
-    // Reset anonymization dictionaries when new files are loaded
-    anonIdCounter = 1;
-    anonMap = {};
+    status.textContent = "Loading files...";
 
     try{
       const [proData, supData, chfData] = await Promise.all([
@@ -496,7 +477,6 @@
     // Flagging inconsistencies (Total vs Score)
     const flaggedIds = new Set();
     group.forEach(p=>{
-      // Use realId for logic to ensure we are comparing unique individuals
       const peersSimilarTotal = group.filter(q => q.realId !== p.realId && Math.abs(q.total - p.total) <= TOTAL_DELTA);
       const higherOverallExists = peersSimilarTotal.some(q => q.score > p.score);
       const higherTotalLowerScore = group.some(q => (p.total - q.total) > TOTAL_DELTA && p.score < q.score);
@@ -509,12 +489,17 @@
     group.sort((a,b)=> b.score - a.score || b.total - a.total);
 
     // Save table data for sorting/filtering and render via the engine
+    let peerCounter = 1;
     lastDeptGroup = group.map(p => {
       // Check if this peer is the Target we just searched for
       const isTarget = (p.realId === emp.realId);
+      
+      // Target gets bold real name, peers get sequential "Employee X"
+      const displayName = isTarget ? `<strong>${p.realName}</strong>` : `Employee ${peerCounter++}`;
+      
       return {
         id: isTarget ? p.realId : "XXXXXXXX", 
-        name: isTarget ? `<strong>${p.realName}</strong>` : p.name, // p.name is "Employee X"
+        name: displayName, 
         total: p.total,
         score: p.score,
         flagged: flaggedIds.has(p.realId) 
@@ -985,7 +970,7 @@
         <div class="card" style="background: #f0fdf4; border-color: #bbf7d0;">
             <ul>
                 <li><strong>Local Processing:</strong> No data is uploaded to the cloud. All calculations happen within your browser.</li>
-                <li><strong>Privacy by Design:</strong> Names and IDs are automatically anonymized upon data ingestion. The system displays sequential anonymous identifiers (e.g., XXXXXXXX, Employee 1) ensuring PII remains secure during presentations and PDF exports. The searched employee's details remain visible for context.</li>
+                <li><strong>Privacy by Design:</strong> Names and IDs are automatically anonymized during rendering. The system displays sequential anonymous identifiers (e.g., XXXXXXXX, Employee 1) ensuring PII remains secure during presentations and PDF exports. The searched employee's details remain visible for context.</li>
                 <li><strong>Segmentation:</strong> Comparisons are strictly isolated by <strong>Department</strong> and <strong>Staff Category</strong> (Professional vs. Professional) to ensure fair "apples-to-apples" analysis.</li>
             </ul>
         </div>
