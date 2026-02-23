@@ -86,8 +86,6 @@
       cursor:pointer;
       transition:all .2s ease;
       box-shadow:0 4px 12px rgba(17,95,102,.2);
-      
-      /* INCREASED MARGIN HERE FOR SPACING */
       margin-top: 24px; 
     }
     button:hover{background:var(--secondary);transform:translateY(-2px); box-shadow:0 6px 15px rgba(0,151,103,.3);}
@@ -188,6 +186,10 @@
       display:inline-flex;align-items:center;gap:6px;
       padding:6px 12px;border-radius:99px;border:1px solid #e5e7eb;background:#f9fafb; font-weight: 500;
     }
+    .pill-target {
+      background: #e8f5e9; /* Green tint to highlight target */
+      border-color: #a5d6a7;
+    }
 
     .signature {
       text-align: center;
@@ -220,6 +222,7 @@
     <h2>Upload Excel Files</h2>
     <p class="help">
       Please upload the staff category files in their original format (from APS) without alterations.<br>
+      <em>Note: Names and IDs of peers will be automatically anonymized to protect privacy.</em>
     </p>
 
     <label>Staff Professional</label>
@@ -247,7 +250,8 @@
   <div id="employeeInfo" class="section" style="display:none;">
     <h2>Employee Information</h2>
     <div class="flex">
-      <div class="pill"><strong>Name:</strong> <span id="empName"></span></div>
+      <div class="pill pill-target"><strong>ID:</strong> <span id="empIdDisp"></span></div>
+      <div class="pill pill-target"><strong>Name:</strong> <span id="empName"></span></div>
       <div class="pill"><strong>Department:</strong> <span id="empDept"></span></div>
       <div class="pill"><strong>Category:</strong> <span id="empCat"></span></div>
       <div class="pill"><strong>Overall Score:</strong> <span id="empScore"></span></div>
@@ -360,6 +364,10 @@
   let totalByScoreChartObj = null;
   let scatterChartObj = null;
 
+  // --- CENSORSHIP STATE ---
+  let anonIdCounter = 1;
+  let anonMap = {};
+
   // ====== Excel Loading ======
   function readExcelFile(file, category){
     return new Promise((resolve, reject) => {
@@ -370,14 +378,32 @@
           const workbook = XLSX.read(e.target.result, { type:"binary" });
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(sheet);
-          const cleaned = rows.map(r => ({
-            id: String(r["KFUPM ID"] ?? "").trim(),
-            name: String(r["Name"] ?? "").trim(),
-            dept: String(r["Department"] ?? "").trim(),
-            score: Number(r["Overall Score"]),
-            total: Number(r["Total (100)"]),
-            category
-          })).filter(x => x.id && x.name && x.dept && !Number.isNaN(x.score) && !Number.isNaN(x.total));
+          
+          const cleaned = rows.map(r => {
+            const rawId = String(r["KFUPM ID"] ?? "").trim();
+            const rawName = String(r["Name"] ?? "").trim();
+            
+            // Map real identity to anonymous identity
+            if (rawId && !anonMap[rawId]) {
+              anonMap[rawId] = {
+                id: "ID" + anonIdCounter,
+                name: "Name " + anonIdCounter
+              };
+              anonIdCounter++;
+            }
+
+            return {
+              realId: rawId,           // Saved for the search target
+              realName: rawName,       // Saved for the search target
+              id: rawId ? anonMap[rawId].id : "", // Display ID (Censored)
+              name: rawId ? anonMap[rawId].name : "", // Display Name (Censored)
+              dept: String(r["Department"] ?? "").trim(),
+              score: Number(r["Overall Score"]),
+              total: Number(r["Total (100)"]),
+              category
+            };
+          }).filter(x => x.realId && x.dept && !Number.isNaN(x.score) && !Number.isNaN(x.total));
+          
           resolve(cleaned);
         }catch(err){ reject(err); }
       };
@@ -392,7 +418,11 @@
     const chief = document.getElementById("fileChief").files[0];
 
     const status = document.getElementById("fileStatus");
-    status.textContent = "Loading files...";
+    status.textContent = "Loading and anonymizing files...";
+
+    // Reset anonymization dictionaries when new files are loaded
+    anonIdCounter = 1;
+    anonMap = {};
 
     try{
       const [proData, supData, chfData] = await Promise.all([
@@ -405,7 +435,7 @@
       allData = [...proData, ...supData, ...chfData];
 
       const totalCount = allData.length;
-      status.textContent = `Files loaded successfully. Total records: ${totalCount} (Professional: ${proData.length}, Support: ${supData.length}, Chief: ${chfData.length}).`;
+      status.textContent = `Files loaded securely. ${totalCount} records processed (Professional: ${proData.length}, Support: ${supData.length}, Chief: ${chfData.length}).`;
 
     }catch(err){
       console.error(err);
@@ -434,15 +464,17 @@
 
   // ====== Main Search & Analysis ======
   function searchEmployee(){
-    const id = String(document.getElementById("searchID").value || "").trim();
-    if(!id){ alert("Please enter a KFUPM ID."); return; }
+    const searchInput = String(document.getElementById("searchID").value || "").trim();
+    if(!searchInput){ alert("Please enter a KFUPM ID."); return; }
 
-    const emp = allData.find(e => e.id === id);
+    // Search by Real ID
+    const emp = allData.find(e => e.realId === searchInput || e.id.toLowerCase() === searchInput.toLowerCase());
     if(!emp){ alert("Employee not found."); return; }
 
-    // Display employee info
+    // Display employee info using REAL Data for the searched target
     document.getElementById("employeeInfo").style.display = "block";
-    document.getElementById("empName").textContent = emp.name;
+    document.getElementById("empIdDisp").textContent = emp.realId;   // UNCENSORED
+    document.getElementById("empName").textContent = emp.realName;   // UNCENSORED
     document.getElementById("empDept").textContent = emp.dept;
     document.getElementById("empCat").textContent = emp.category;
     document.getElementById("empScore").textContent = emp.score;
@@ -461,7 +493,7 @@
       const higherOverallExists = peersSimilarTotal.some(q => q.score > p.score);
       const higherTotalLowerScore = group.some(q => (p.total - q.total) > TOTAL_DELTA && p.score < q.score);
       if(higherOverallExists || higherTotalLowerScore){
-        flaggedIds.add(p.id);
+        flaggedIds.add(p.id); // Uses censored ID
       }
     });
 
@@ -469,13 +501,17 @@
     group.sort((a,b)=> b.score - a.score || b.total - a.total);
 
     // Save table data for sorting/filtering and render via the engine
-    lastDeptGroup = group.map(p => ({
-      id: p.id,
-      name: p.name,
-      total: p.total,
-      score: p.score,
-      flagged: flaggedIds.has(p.id) // boolean
-    }));
+    lastDeptGroup = group.map(p => {
+      // Check if this peer is the Target we just searched for
+      const isTarget = (p.realId === emp.realId);
+      return {
+        id: isTarget ? p.realId : p.id, // Target is Uncensored, Peers are Censored
+        name: isTarget ? `<strong>${p.realName} (Target)</strong>` : p.name, // Target is Bolded/Uncensored
+        total: p.total,
+        score: p.score,
+        flagged: flaggedIds.has(p.id) 
+      }
+    });
 
     applyFiltersAndSorting();
 
@@ -721,6 +757,7 @@
 
     rows.forEach(r => {
       const badge = r.flagged ? `<span class="badge badge-warn">⚠ Inconsistent</span>` : `<span class="badge badge-ok">✓ OK</span>`;
+      // We use .innerHTML for name because it might contain the <strong>(Target)</strong> HTML tag
       tbody.insertAdjacentHTML("beforeend", `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.total}</td><td>${r.score}</td><td>${badge}</td></tr>`);
     });
   }
@@ -932,6 +969,7 @@
         <div class="card" style="background: #f0fdf4; border-color: #bbf7d0;">
             <ul>
                 <li><strong>Local Processing:</strong> No data is uploaded to the cloud. All calculations happen within your browser.</li>
+                <li><strong>Privacy by Design:</strong> Names and IDs are automatically anonymized upon data ingestion. The system displays sequential anonymous identifiers (e.g., ID1, Name1) ensuring PII remains secure during presentations and PDF exports. The searched employee's details remain visible for context.</li>
                 <li><strong>Segmentation:</strong> Comparisons are strictly isolated by <strong>Department</strong> and <strong>Staff Category</strong> (Professional vs. Professional) to ensure fair "apples-to-apples" analysis.</li>
             </ul>
         </div>
