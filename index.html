@@ -68,15 +68,8 @@
     label{display:block;margin-top:10px;font-weight:600}
     
     /* General Inputs */
-    /* UPDATED: Added input[type=text] to ensure proper styling */
-    input[type=file], input[type=number], input[type=text] {
-      width:100%;
-      padding:12px;
-      margin-top:6px;
-      border-radius:10px;
-      border:1px solid #d1d5db;
-      font-size:15px;
-      background:#fff;
+    input[type=file], input[type=number], input[type=text]{
+      width:100%;padding:12px;margin-top:6px;border-radius:10px;border:1px solid #d1d5db;font-size:15px;background:#fff;
       transition: border-color 0.2s;
     }
     input:focus { outline:none; border-color: var(--primary); }
@@ -111,11 +104,8 @@
     .status{font-weight:600;color:var(--secondary);margin-top:10px}
     .count-box{ background:#ddf3e9;border-left:6px solid var(--secondary); padding:12px 16px;border-radius:8px;margin:6px 0 16px;font-weight:600; }
     
-    /* Flex Container fixes */
     .flex { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-    
-    /* NEW: Make the search input grow to fill space */
-    .flex input { flex: 1; margin-top: 24px; /* Align with button */ } 
+    .flex input { flex: 1; margin-top: 24px; } 
 
     /* --- TABLE STYLING: HIGH CONTRAST SOLID --- */
     table { width:100%; border-collapse:separate; border-spacing: 0; margin-top:14px; font-size:14px; }
@@ -177,8 +167,10 @@
         border-bottom: 1px solid #f3f4f6; 
         color: var(--ink); 
         vertical-align: middle;
-        text-align: center;
+        text-align: center; /* Center everything by default */
     }
+    
+    /* Left align only the Name column */
     tbody td:nth-child(2) { text-align: left; padding-left: 24px; }
     thead tr:first-child th:nth-child(2) { text-align: left; padding-left: 24px; }
     tbody tr:hover { background-color: #f9fafb; }
@@ -198,7 +190,7 @@
       padding:6px 12px;border-radius:99px;border:1px solid #e5e7eb;background:#f9fafb; font-weight: 500;
     }
     .pill-target {
-      background: #e8f5e9; /* Green tint to highlight target */
+      background: #e8f5e9; 
       border-color: #a5d6a7;
     }
 
@@ -393,12 +385,21 @@
           const cleaned = rows.map(r => {
             const rawId = String(r["KFUPM ID"] ?? "").trim();
             const rawName = String(r["Name"] ?? "").trim();
+            
+            // Map real identity to anonymous identity
+            if (rawId && !anonMap[rawId]) {
+              anonMap[rawId] = {
+                id: "XXXXXXXX",
+                name: "Employee " + anonIdCounter
+              };
+              anonIdCounter++;
+            }
 
             return {
-              realId: rawId,           // Saved for the search target logic
-              realName: rawName,       // Saved for the search target logic
-              id: rawId ? "ID" : "",   // Display ID (Censored)
-              name: rawId ? "Name" : "", // Display Name (Censored)
+              realId: rawId,           
+              realName: rawName,       
+              id: rawId ? anonMap[rawId].id : "", 
+              name: rawId ? anonMap[rawId].name : "", 
               dept: String(r["Department"] ?? "").trim(),
               score: Number(r["Overall Score"]),
               total: Number(r["Total (100)"]),
@@ -421,6 +422,10 @@
 
     const status = document.getElementById("fileStatus");
     status.textContent = "Loading and anonymizing files...";
+
+    // Reset anonymization dictionaries when new files are loaded
+    anonIdCounter = 1;
+    anonMap = {};
 
     try{
       const [proData, supData, chfData] = await Promise.all([
@@ -475,8 +480,8 @@
 
     // Display employee info using REAL Data for the searched target
     document.getElementById("employeeInfo").style.display = "block";
-    document.getElementById("empIdDisp").textContent = emp.realId;   // UNCENSORED
-    document.getElementById("empName").textContent = emp.realName;   // UNCENSORED
+    document.getElementById("empIdDisp").textContent = emp.realId;   
+    document.getElementById("empName").textContent = emp.realName;   
     document.getElementById("empDept").textContent = emp.dept;
     document.getElementById("empCat").textContent = emp.category;
     document.getElementById("empScore").textContent = emp.score;
@@ -508,8 +513,8 @@
       // Check if this peer is the Target we just searched for
       const isTarget = (p.realId === emp.realId);
       return {
-        id: isTarget ? p.realId : "ID", 
-        name: isTarget ? `<strong>${p.realName}</strong>` : "Name", 
+        id: isTarget ? p.realId : "XXXXXXXX", 
+        name: isTarget ? `<strong>${p.realName}</strong>` : p.name, // p.name is "Employee X"
         total: p.total,
         score: p.score,
         flagged: flaggedIds.has(p.realId) 
@@ -561,7 +566,7 @@
 
     let rec = "";
     if (normal) {
-      rec = `Based on a review of previous evaluations and a comparison of the employee’s recent evaluation with peers within the same department, and taking into account the department’s average rating of ${avg.toFixed(2)}, we recommend no changes in the evaluation score.`;
+      rec = `Based on the review of the evaluation of the past 3 years and comparison of the employee’s recent evaluation with peers in the same department, and considering the department’s rating average of ${avg.toFixed(2)}, we recommend no changes in the evaluation score.`;
     } else {
       let reasons = [];
       const peersWithLowerTotalHigherScore = group.filter(p => p.total < emp.total && p.score > emp.score);
@@ -809,10 +814,15 @@
 
         .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 8px; page-break-inside: avoid; }
         h2 { color: #115f66; margin-top: 0; }
-        /* Clean Tables */
+        
+        /* Clean Tables - ALIGNED PROPERLY FOR EXPORT */
         table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        th { background-color: #115f66; color: white; padding: 8px; text-align: left; border: 1px solid #115f66; }
-        td { padding: 8px; border: 1px solid #ddd; }
+        th { background-color: #115f66; color: white; padding: 8px; border: 1px solid #115f66; text-align: center; }
+        td { padding: 8px; border: 1px solid #ddd; text-align: center; }
+        
+        /* Keep Name column left-aligned */
+        th:nth-child(2), td:nth-child(2) { text-align: left; padding-left: 15px; }
+
         tr:nth-child(even) { background-color: #f9f9f9; }
         /* Badges */
         .badge { padding: 4px 8px; border-radius: 99px; font-weight: bold; font-size: 11px; display: inline-block; border: 1px solid #ccc; }
@@ -898,8 +908,12 @@
         body { font-family: 'Inter', sans-serif; padding: 40px; color: #1f2937; }
         h1 { text-align: center; color: #115f66; margin-bottom: 30px; font-size: 24px; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { background-color: #115f66; color: white; padding: 12px 8px; text-align: left; border: 1px solid #115f66; }
-        td { padding: 10px 8px; border: 1px solid #e5e7eb; }
+        th { background-color: #115f66; color: white; padding: 12px 8px; border: 1px solid #115f66; text-align: center; }
+        td { padding: 10px 8px; border: 1px solid #e5e7eb; text-align: center; }
+        
+        /* Keep Name column left-aligned */
+        th:nth-child(2), td:nth-child(2) { text-align: left; padding-left: 15px; }
+
         tr:nth-child(even) { background-color: #f9fafb; }
         .badge { padding: 4px 8px; border-radius: 99px; font-weight: bold; font-size: 11px; display: inline-block; }
         .badge-ok { background:#e8f5e9; color:#1b5e20; border:1px solid #a5d6a7; }
@@ -971,7 +985,7 @@
         <div class="card" style="background: #f0fdf4; border-color: #bbf7d0;">
             <ul>
                 <li><strong>Local Processing:</strong> No data is uploaded to the cloud. All calculations happen within your browser.</li>
-                <li><strong>Privacy by Design:</strong> Names and IDs are automatically anonymized upon data ingestion. The system displays static anonymous identifiers (e.g., ID, Name) ensuring PII remains secure during presentations and PDF exports. The searched employee's details remain visible for context.</li>
+                <li><strong>Privacy by Design:</strong> Names and IDs are automatically anonymized upon data ingestion. The system displays sequential anonymous identifiers (e.g., XXXXXXXX, Employee 1) ensuring PII remains secure during presentations and PDF exports. The searched employee's details remain visible for context.</li>
                 <li><strong>Segmentation:</strong> Comparisons are strictly isolated by <strong>Department</strong> and <strong>Staff Category</strong> (Professional vs. Professional) to ensure fair "apples-to-apples" analysis.</li>
             </ul>
         </div>
