@@ -190,7 +190,7 @@
       padding:6px 12px;border-radius:99px;border:1px solid #e5e7eb;background:#f9fafb; font-weight: 500;
     }
     .pill-target {
-      background: #e8f5e9; /* Green tint to highlight target */
+      background: #e8f5e9; 
       border-color: #a5d6a7;
     }
 
@@ -477,10 +477,16 @@
     // Flagging inconsistencies (Total vs Score)
     const flaggedIds = new Set();
     group.forEach(p=>{
+      
+      // Rule 1 & 2: Similar total but someone else got higher, OR lower total got higher score
       const peersSimilarTotal = group.filter(q => q.realId !== p.realId && Math.abs(q.total - p.total) <= TOTAL_DELTA);
       const higherOverallExists = peersSimilarTotal.some(q => q.score > p.score);
       const higherTotalLowerScore = group.some(q => (p.total - q.total) > TOTAL_DELTA && p.score < q.score);
-      if(higherOverallExists || higherTotalLowerScore){
+      
+      // Rule 3 (NEW): Same Score, Huge variation in Total (>= 10 points)
+      const sameScoreHugeGap = group.some(q => q.realId !== p.realId && p.score === q.score && Math.abs(p.total - q.total) >= VARIATION_STD_THRESHOLD);
+
+      if(higherOverallExists || higherTotalLowerScore || sameScoreHugeGap){
         flaggedIds.add(p.realId); 
       }
     });
@@ -494,7 +500,7 @@
       // Check if this peer is the Target we just searched for
       const isTarget = (p.realId === emp.realId);
       
-      // Target gets bold real name, peers get sequential "Employee X"
+      // Target gets bold real name, peers get sequential "Employee X" based on table rank
       const displayName = isTarget ? `<strong>${p.realName}</strong>` : `Employee ${peerCounter++}`;
       
       return {
@@ -554,13 +560,21 @@
       rec = `Based on a review of previous evaluations and a comparison of the employee’s recent evaluation with peers within the same department, and taking into account the department’s average rating of ${avg.toFixed(2)}, we recommend no changes in the evaluation score.`;
     } else {
       let reasons = [];
-      const peersWithLowerTotalHigherScore = group.filter(p => p.total < emp.total && p.score > emp.score);
+      const peersWithLowerTotalHigherScore = group.filter(p => p.realId !== emp.realId && p.total < emp.total && p.score > emp.score);
       if (peersWithLowerTotalHigherScore.length > 0) {
         reasons.push(`Several peers with lower Total (100) received higher overall scores, indicating inconsistency in evaluation application.`);
       }
+
+      // Cite the new "Same Score, Huge Gap" rule if applicable
+      const peersWithHugeGapSameScore = group.filter(p => p.realId !== emp.realId && p.score === emp.score && Math.abs(p.total - emp.total) >= VARIATION_STD_THRESHOLD);
+      if (peersWithHugeGapSameScore.length > 0) {
+        reasons.push(`There is a severe gap in Total (100) (≥ 10 points) between the employee and peers who received the exact same Overall Score.`);
+      }
+
       if (!withinDistribution) {
         reasons.push(`The employee’s Total (100) falls significantly outside the distribution of others who received the same overall score.`);
       }
+
       const highVarGroups = [];
       [1, 2, 3, 4, 5].forEach(s => {
         const vals = group.filter(g => g.score === s).map(g => g.total);
@@ -571,6 +585,7 @@
       if (highVarGroups.length > 0) {
         reasons.push(`Significant variation was observed within score groups ${highVarGroups.join(", ")}, suggesting inconsistent scoring practices.`);
       }
+      
       reasons.push(`The department’s average rating of ${avg.toFixed(2)} further indicates irregular scoring patterns.`);
       reasons.push(`Accordingly, the APS Team recommends reconsideration of the assigned evaluation score.`);
       rec = reasons.join(" ");
@@ -921,107 +936,3 @@
     // THE HTML CONTENT FOR THE DOCUMENTATION
     const docHTML = `
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Analysis Methodology</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --primary: #115f66; --secondary: #009767; --text: #1f2937; --bg: #ffffff; --light-grey: #f3f4f6; --border: #e5e7eb; }
-        body { font-family: 'Inter', sans-serif; color: var(--text); background: var(--light-grey); margin: 0; padding: 40px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        .page { max-width: 850px; margin: 0 auto; background: #ffffff; padding: 60px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-radius: 12px; }
-        .doc-header { border-bottom: 3px solid var(--primary); padding-bottom: 20px; margin-bottom: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .doc-title h1 { color: var(--primary); font-size: 32px; margin: 0; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase; }
-        .doc-title .subtitle { color: var(--secondary); font-size: 14px; font-weight: 600; letter-spacing: 1px; margin-top: 5px; text-transform: uppercase; }
-        .meta { text-align: right; font-size: 12px; color: #6b7280; }
-        h2 { color: var(--primary); font-size: 18px; font-weight: 700; margin-top: 30px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        h2::before { content: ''; display: block; width: 6px; height: 24px; background: var(--secondary); border-radius: 2px; }
-        p { font-size: 14px; line-height: 1.6; color: #374151; margin-bottom: 15px; text-align: justify; }
-        .logic-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-        .card { background: #f9fafb; border: 1px solid var(--border); padding: 20px; border-radius: 8px; }
-        .card h3 { margin: 0 0 10px 0; font-size: 15px; color: var(--primary); font-weight: 700; }
-        .card ul { margin: 0; padding-left: 20px; font-size: 13px; color: #4b5563; }
-        .card li { margin-bottom: 6px; }
-        .rec-container { display: flex; gap: 20px; margin-top: 20px; }
-        .rec-box { flex: 1; padding: 20px; border-radius: 8px; font-size: 13px; }
-        .rec-ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
-        .rec-warn { background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; }
-        .rec-title { font-weight: 700; margin-bottom: 8px; display: block; font-size: 14px; text-transform: uppercase; }
-        .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); text-align: right; }
-        .signature { font-family: 'Courier New', Courier, monospace; font-weight: 600; color: var(--primary); font-size: 14px; letter-spacing: 1px; }
-        .print-btn { position: fixed; top: 20px; right: 20px; background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; }
-        .print-btn:hover { background: var(--secondary); }
-        @media print { body { background: white; padding: 0; } .page { box-shadow: none; padding: 0; margin: 0; width: 100%; max-width: 100%; } .print-btn { display: none; } * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
-    </style>
-</head>
-<body>
-    <button class="print-btn" onclick="window.print()">Save as PDF</button>
-    <div class="page">
-        <header class="doc-header">
-            <div class="doc-title">
-                <h1>Analysis Methodology</h1>
-                <div class="subtitle">Staff Evaluation Grievance Tool</div>
-            </div>
-            <div class="meta">INTERNAL DOCUMENT<br>CONFIDENTIAL</div>
-        </header>
-        <h2>1. Overview</h2>
-        <p>This dashboard is an analytical tool designed to assist HR analysts in objectively reviewing staff performance scores. By uploading raw APS data, the system performs real-time statistical comparisons to detect grading irregularities, ensuring that the assigned <strong>Overall Score (1–5)</strong> is consistent with the calculated <strong>Total (0–100)</strong> relative to the department's behavior.</p>
-        <h2>2. Data & Privacy</h2>
-        <div class="card" style="background: #f0fdf4; border-color: #bbf7d0;">
-            <ul>
-                <li><strong>Local Processing:</strong> No data is uploaded to the cloud. All calculations happen within your browser.</li>
-                <li><strong>Privacy by Design:</strong> Names and IDs are automatically anonymized during rendering. The system displays sequential anonymous identifiers (e.g., XXXXXXXX, Employee 1) ensuring PII remains secure during presentations and PDF exports. The searched employee's details remain visible for context.</li>
-                <li><strong>Segmentation:</strong> Comparisons are strictly isolated by <strong>Department</strong> and <strong>Staff Category</strong> (Professional vs. Professional) to ensure fair "apples-to-apples" analysis.</li>
-            </ul>
-        </div>
-        <h2>3. The Analytical Logic</h2>
-        <p>The system uses three primary checks to validate a score:</p>
-        <div class="logic-grid">
-            <div class="card">
-                <h3>A. Inconsistency Check</h3>
-                <p>An employee is flagged if logical contradictions exist within the peer group:</p>
-                <ul>
-                    <li><strong>Peer A</strong> has a similar Total but got a higher Score.</li>
-                    <li><strong>Peer B</strong> has a significantly <em>lower</em> Total but still got a higher Score.</li>
-                </ul>
-            </div>
-            <div class="card">
-                <h3>B. Variation Check (Std Dev)</h3>
-                <p>We analyze the consistency of grading within specific score groups:</p>
-                <ul>
-                    <li>We group everyone who received the same score (e.g., "3").</li>
-                    <li>If the Standard Deviation (σ) of their totals is <strong>> 10</strong>, it indicates High Variation (subjective grading).</li>
-                </ul>
-            </div>
-        </div>
-        <div class="card">
-            <h3>C. Distribution Outlier Check</h3>
-            <p style="margin-bottom:0">The system calculates the normal range (Mean ± Standard Deviation) for the specific score group. If the employee's Total (100) falls outside this range, they are flagged as a statistical outlier.</p>
-        </div>
-        <h2>4. Automated Recommendation</h2>
-        <p>The tool generates a conclusion based on the aggregate of the checks above.</p>
-        <div class="rec-container">
-            <div class="rec-box rec-ok">
-                <span class="rec-title">Case 1: No Change</span>
-                <p style="margin:0">Recommended only if the employee's score aligns with the department average, fits the distribution curve, and has zero inconsistency flags.</p>
-            </div>
-            <div class="rec-box rec-warn">
-                <span class="rec-title">Case 2: Reconsideration</span>
-                <p style="margin:0">Triggered if ANY check fails. The system cites specific reasons (e.g., "Peer inconsistency detected," "Employee is an outlier," or "High departmental variation").</p>
-            </div>
-        </div>
-        <div class="footer">
-            <div class="signature">Designed π Hadi</div>
-        </div>
-    </div>
-</body>
-</html>
-    `;
-
-    printWindow.document.write(docHTML);
-    printWindow.document.close();
-  }
-</script>
-
-</body>
-</html>
