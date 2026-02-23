@@ -241,7 +241,7 @@
   <div class="section">
     <h2>Search Employee</h2>
     <div class="flex">
-      <input type="number" id="searchID" placeholder="Enter KFUPM ID" />
+      <input type="text" id="searchID" placeholder="Enter Real KFUPM ID" />
       <button onclick="searchEmployee()">Search</button>
     </div>
     <p class="small muted">Comparison includes employees from the <strong>same Department</strong> and the <strong>same Category</strong>.</p>
@@ -364,10 +364,6 @@
   let totalByScoreChartObj = null;
   let scatterChartObj = null;
 
-  // --- CENSORSHIP STATE ---
-  let anonIdCounter = 1;
-  let anonMap = {};
-
   // ====== Excel Loading ======
   function readExcelFile(file, category){
     return new Promise((resolve, reject) => {
@@ -382,21 +378,12 @@
           const cleaned = rows.map(r => {
             const rawId = String(r["KFUPM ID"] ?? "").trim();
             const rawName = String(r["Name"] ?? "").trim();
-            
-            // Map real identity to anonymous identity
-            if (rawId && !anonMap[rawId]) {
-              anonMap[rawId] = {
-                id: "ID" + anonIdCounter,
-                name: "Name " + anonIdCounter
-              };
-              anonIdCounter++;
-            }
 
             return {
-              realId: rawId,           // Saved for the search target
-              realName: rawName,       // Saved for the search target
-              id: rawId ? anonMap[rawId].id : "", // Display ID (Censored)
-              name: rawId ? anonMap[rawId].name : "", // Display Name (Censored)
+              realId: rawId,           // Saved for the search target logic
+              realName: rawName,       // Saved for the search target logic
+              id: rawId ? "ID" : "",   // Display ID (Censored)
+              name: rawId ? "Name" : "", // Display Name (Censored)
               dept: String(r["Department"] ?? "").trim(),
               score: Number(r["Overall Score"]),
               total: Number(r["Total (100)"]),
@@ -419,10 +406,6 @@
 
     const status = document.getElementById("fileStatus");
     status.textContent = "Loading and anonymizing files...";
-
-    // Reset anonymization dictionaries when new files are loaded
-    anonIdCounter = 1;
-    anonMap = {};
 
     try{
       const [proData, supData, chfData] = await Promise.all([
@@ -468,8 +451,12 @@
     if(!searchInput){ alert("Please enter a KFUPM ID."); return; }
 
     // Search by Real ID
-    const emp = allData.find(e => e.realId === searchInput || e.id.toLowerCase() === searchInput.toLowerCase());
+    const emp = allData.find(e => e.realId === searchInput);
     if(!emp){ alert("Employee not found."); return; }
+
+    // CENSORSHIP ACTION: Wipe the real ID from the input box
+    document.getElementById("searchID").value = "";
+    document.getElementById("searchID").placeholder = "Viewing: " + emp.realId;
 
     // Display employee info using REAL Data for the searched target
     document.getElementById("employeeInfo").style.display = "block";
@@ -489,11 +476,12 @@
     // Flagging inconsistencies (Total vs Score)
     const flaggedIds = new Set();
     group.forEach(p=>{
-      const peersSimilarTotal = group.filter(q => q.id !== p.id && Math.abs(q.total - p.total) <= TOTAL_DELTA);
+      // Use realId for logic to ensure we are comparing unique individuals
+      const peersSimilarTotal = group.filter(q => q.realId !== p.realId && Math.abs(q.total - p.total) <= TOTAL_DELTA);
       const higherOverallExists = peersSimilarTotal.some(q => q.score > p.score);
       const higherTotalLowerScore = group.some(q => (p.total - q.total) > TOTAL_DELTA && p.score < q.score);
       if(higherOverallExists || higherTotalLowerScore){
-        flaggedIds.add(p.id); // Uses censored ID
+        flaggedIds.add(p.realId); 
       }
     });
 
@@ -505,11 +493,11 @@
       // Check if this peer is the Target we just searched for
       const isTarget = (p.realId === emp.realId);
       return {
-        id: isTarget ? p.realId : p.id, // Target is Uncensored, Peers are Censored
-        name: isTarget ? `<strong>${p.realName} (Target)</strong>` : p.name, // Target is Bolded/Uncensored
+        id: isTarget ? p.realId : "ID", 
+        name: isTarget ? `<strong>${p.realName}</strong>` : "Name", 
         total: p.total,
         score: p.score,
-        flagged: flaggedIds.has(p.id) 
+        flagged: flaggedIds.has(p.realId) 
       }
     });
 
@@ -549,7 +537,7 @@
     }
 
     // Recommendation logic
-    const employeeIsFlagged = flaggedIds.has(emp.id);
+    const employeeIsFlagged = flaggedIds.has(emp.realId);
     const normal =
       (avg >= 2 && avg <= 3) &&                
       (Math.abs(emp.score - avg) <= 1) &&      
@@ -757,7 +745,6 @@
 
     rows.forEach(r => {
       const badge = r.flagged ? `<span class="badge badge-warn">⚠ Inconsistent</span>` : `<span class="badge badge-ok">✓ OK</span>`;
-      // We use .innerHTML for name because it might contain the <strong>(Target)</strong> HTML tag
       tbody.insertAdjacentHTML("beforeend", `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.total}</td><td>${r.score}</td><td>${badge}</td></tr>`);
     });
   }
@@ -969,7 +956,7 @@
         <div class="card" style="background: #f0fdf4; border-color: #bbf7d0;">
             <ul>
                 <li><strong>Local Processing:</strong> No data is uploaded to the cloud. All calculations happen within your browser.</li>
-                <li><strong>Privacy by Design:</strong> Names and IDs are automatically anonymized upon data ingestion. The system displays sequential anonymous identifiers (e.g., ID1, Name1) ensuring PII remains secure during presentations and PDF exports. The searched employee's details remain visible for context.</li>
+                <li><strong>Privacy by Design:</strong> Names and IDs are automatically anonymized upon data ingestion. The system displays static anonymous identifiers (e.g., ID, Name) ensuring PII remains secure during presentations and PDF exports. The searched employee's details remain visible for context.</li>
                 <li><strong>Segmentation:</strong> Comparisons are strictly isolated by <strong>Department</strong> and <strong>Staff Category</strong> (Professional vs. Professional) to ensure fair "apples-to-apples" analysis.</li>
             </ul>
         </div>
